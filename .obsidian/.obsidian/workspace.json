@@ -1,0 +1,154 @@
+{
+  "main": {
+    "id": "fb58815f9b06d746",
+    "type": "split",
+    "children": [
+      {
+        "id": "7e7c1221ac1cbc83",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ede6ec2392aff3b9",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "L tree tutorial.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "588738071ff68830",
+    "type": "split",
+    "children": [
+      {
+        "id": "09585e7bb8b0c8e8",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "702809081daaa4fa",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "ec72fefc79308317",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "95ff1130bd780a7c",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d8f707e85b904cd8",
+    "type": "split",
+    "children": [
+      {
+        "id": "31670e19d84b3b14",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e0981fc12170a47d",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "L tree tutorial.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "46d4ceaa9e4c025a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "L tree tutorial.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "44cf9c6132d653a9",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "cf6b638ddf796232",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "L tree tutorial.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
+    }
+  },
+  "active": "ede6ec2392aff3b9",
+  "lastOpenFiles": [
+    "B D.md",
+    "L tree tutorial.md"
+  ]
+}

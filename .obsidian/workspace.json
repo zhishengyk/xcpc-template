@@ -1,0 +1,187 @@
+{
+  "main": {
+    "id": "65697586154bc75a",
+    "type": "split",
+    "children": [
+      {
+        "id": "d32738134dc6e20e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bc5de986b947261f",
+            "type": "leaf",
+            "state": {
+              "type": "image",
+              "state": {
+                "file": "0.0/{CA30B81F-86D7-490b-BA11-3680A03A220F}.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "af3569791d2eafc9",
+    "type": "split",
+    "children": [
+      {
+        "id": "57892e8fb9505bfe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "33a3f7dc5f779ba1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "0e86f02c7e2362db",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "052066804c4581b7",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "a38cca1aaecd14db",
+    "type": "split",
+    "children": [
+      {
+        "id": "296afecc1bc98482",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "63c11dbf6b2c0be4",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "0.0/{CA30B81F-86D7-490b-BA11-3680A03A220F}.png",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "298b4023fff1efb5",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "0.0/{CA30B81F-86D7-490b-BA11-3680A03A220F}.png",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "583917729c92750f",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "5e2938efa04fa14f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "0.0/{CA30B81F-86D7-490b-BA11-3680A03A220F}.png"
+              }
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
+    }
+  },
+  "active": "bc5de986b947261f",
+  "lastOpenFiles": [
+    "0.0/{D51C853B-71FA-43f6-9FCC-667352A86A41}.png",
+    "0.0/{55AFE736-1406-4edc-B038-03E0401C9C8F}.png",
+    "0.0/{39B92177-9DD9-4327-A28D-CAE4DC301895}.png",
+    "0.0/{CA30B81F-86D7-490b-BA11-3680A03A220F}.png",
+    "B D.md",
+    "DS/AdjDiff.md",
+    "DS/Accumulator.md",
+    "TREE/LCT.md",
+    "TREE/CustomTree.md",
+    "2024-10-01.md",
+    "未命名 2.canvas",
+    "MATH/PrimeCheck.md",
+    "DS/LazySegTree2D.md",
+    "STR/LongestCommonPrefix_hash.md",
+    "DS/LazyBitset.md",
+    "DS/ZkwTree.md",
+    "DS/STtable.md",
+    "DS/SqrtTree.md",
+    "DS/SegTree.md",
+    "DS/PersistentSegTree.md",
+    "GRAPH/Dinic_mcmf.md",
+    "未命名 1",
+    "GRAPH/Dinic.md",
+    "dinic.txt",
+    "新建 文本文档.txt",
+    "GRAPH/CostFlowHelper.md",
+    "未命名 1.canvas",
+    "DS/BiTrie.md",
+    "01trie.txt",
+    "DS/Bitset.md",
+    "STR/StaticSequenceHasher.md",
+    "未命名.canvas",
+    "【Dls】计算几何大板子.md",
+    "MATH/Eratosthenes.md",
+    "未命名.md",
+    "未命名",
+    "MATH/DynamicMontgomeryModInt.md"
+  ]
+}
