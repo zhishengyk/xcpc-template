@@ -63,20 +63,25 @@ struct Segment_Tree_Lazy {
         push_down(p, l, r);
         return query(p << 1, l, m, L, R) + query(p << 1 | 1, m + 1, r, L, R);
     }
-    pair<int,Info> search(int p,int l,int r,int L,int R,Info pre, const auto  check) {
-        if(r < L || R < l ) return {-1,Info()};
-        if(!check(pre + node[p])) {
-            return {-1,node[p]};
-        }
-        if(l == r) return {l,node[p]};
+    template <typename Check>
+    pair<int,Info> search(int p,int l,int r,int L,int R,Info pre, Check check) {
+        if (r < L || R < l) return {-1, Info()};
+        bool fully = (L <= l && r <= R);
+        if (fully && !check(pre + node[p])) return {-1, node[p]};
+        if (l == r) return {l, node[p]};
         int mid = (l + r) >> 1;
-        push_down(p,l,r);
-        auto [x, y] = search(p << 1,l,mid,L,R,pre,check);
-        if(x == -1) {
-            return search(p << 1 | 1,mid + 1, r,L,R,pre + y,check);
+        push_down(p, l, r);
+        auto left_res = search(p << 1, l, mid, L, R, pre, check);
+        if (left_res.first == -1) {
+            Info leftConsumed = Info();
+            if (fully) {
+                leftConsumed = node[p << 1];
+            } else if (!(R < l || mid < L)) {
+                leftConsumed = query(p << 1, l, mid, L, R);
+            }
+            return search(p << 1 | 1, mid + 1, r, L, R, pre + leftConsumed, check);
         }
- 
-        return {x,y};
+        return left_res;
     }
 };
  
