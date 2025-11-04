@@ -1,0 +1,33 @@
+# LaTeX 临时文件
+*.aux
+*.log
+*.out
+*.toc
+*.gz
+*.fdb_latexmk
+*.fls
+*.xdv
+*.gch
+
+# PDF 输出（如果不想上传生成的 PDF，可以保留这一行；如果要上传 PDF，删除这一行）
+# main.pdf
+
+# 编译输出
+*.exe
+*.o
+*.obj
+case/
+*.ans
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+

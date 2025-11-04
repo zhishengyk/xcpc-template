@@ -1,0 +1,399 @@
+\documentclass[8pt,a4paper]{article}
+
+\usepackage[UTF8]{ctex}
+\usepackage[landscape,margin=1.8cm]{geometry}
+\usepackage{fontspec}
+
+\usepackage{listings}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{amsmath}
+
+% 设置等宽字体 (用于代码块)
+\setmonofont{JetBrainsMonoNerdFontMono-Regular.ttf}[Path=./src/]
+% \setmainfont{JetBrainsMonoNerdFontMono-Regular.ttf}[Path=./src/]
+\graphicspath{{./src/}}
+
+% --- listings 样式配置 ---
+\lstset{
+    language            =   C++,                                    % 语言设置
+    numbers             =   left,                                   % 行号位置
+    numbersep           =   6pt,                                    % 行号距离
+    numberstyle         =   \tiny\color{gray},                      % 行号设置
+    lineskip            =   2pt,                                    % 行间距离
+    basicstyle          =   \ttfamily\scriptsize,                   % 基础文本风格
+    keywordstyle        =   \ttfamily\bfseries\color{blue},         % 关键字风格
+    commentstyle        =   \ttfamily\bfseries\color{ForestGreen},  % 注释风格
+    stringstyle         =   \ttfamily\color{red},                   % 字符串风格
+    showspace           =   false,                                  % 不显示空格
+    showstringspaces    =   false,                                  % 不显示字符串中空格
+    frame               =   shadowbox,                              % 边框样式
+    framerule           =   0.3pt,                                  % 边框粗细
+    framesep            =   2pt,                                    % 边框与代码间距
+    rulesepcolor        =   \color{red!20!green!20!blue!20},        % 边框阴影颜色
+    breaklines          =   true,                                   % 自动断行
+}
+
+% --- 为 shell script 单独设置 ---
+\lstdefinestyle{sh}{
+    language            = sh,
+    keywordstyle        =   \ttfamily\bfseries\color{violet},
+}
+
+% --- 创建一个新的、方便调用的命令 ---
+\newcommand{\code}[1]{
+    \lstinputlisting{#1}
+}
+\newcommand{\shcode}[1]{
+    \lstinputlisting[style=sh]{#1}
+}
+\newcommand{\txt}[1]{
+    \footnotesize\text{#1}
+}
+
+% --- 文档信息 (用于封面) ---
+\title{願いが叶う場所}
+\author{Nrtusea}
+\date{\today}
+
+% --- 页眉页脚配置 ---
+\makeatletter
+\pagestyle{fancy}                       % 应用 fancy 样式
+\fancyhf{}                              % 清空所有页眉页脚
+\fancyhead[L]{\@author}                 % 页眉左侧: 作者
+\fancyhead[R]{\@title}                  % 页眉右侧: 标题
+\fancyfoot[C]{\thepage}                 % 页脚中间: 页码
+\renewcommand{\headrulewidth}{0.5pt}    % 页眉下方的横线宽度
+\renewcommand{\footrulewidth}{0.5pt}    % 页脚上方的横线宽度
+\makeatother
+
+\begin{document}
+
+% --- 封面页 ---
+\makeatletter
+\begin{titlepage}
+    \centering
+    \thispagestyle{empty}
+    \vspace*{0.8cm}
+
+    % 图片
+    \includegraphics[width=0.3\textwidth]{願いが叶う場所-～VocalHarmony-version～}
+    \vspace{1cm}
+
+    % 标题
+    {\Huge\bfseries \@title\par}
+    \vspace{0.75cm}
+    
+    \hrule
+
+    % 副标题
+    \vspace{0.35cm}
+    {\Large \textit{何度も背を向けてた}\par}
+    \vspace{0.75cm}
+
+    % 作者
+    {\Large \@author\par}
+    \vspace{0.25cm}
+
+    % 日期
+    {\large \@date\par}
+    \vspace{0.25cm}
+
+    % {{Codeforces: Nrtusea}\par}
+    % {{Atcoder: Nrtusea}\par}
+    {{QQ: 235233555}\par}
+    {{E-mail: Urtusea@gmail.com}\par}
+    
+    \vfill
+
+    {\large \textit{重庆移通学院}}
+
+\end{titlepage}
+\makeatother
+
+% --- 目录页 ---
+\newpage
+\tableofcontents
+\newpage
+
+% --- 正文内容从此页开始 ---
+\setlength{\parindent}{0pt}
+\setlength{\columnsep}{22pt}
+\begin{multicols}{2}
+\pagenumbering{arabic}
+
+\section{Prepare | 准备工作}
+
+    \subsection{Testing | 测试}
+
+        \subsubsection{Floyd | 传递闭包}
+            \txt{\begin{itemize}
+                \item Codeforces: 1421 ms
+                \item Atcoder: 476 ms
+                \item QOJ: 328 ms
+            \end{itemize}}
+            \code{src/misc/test_floyd.cpp}
+
+        \subsubsection{Floyd with Bitset | 传递闭包 bitset 优化}
+            \txt{\begin{itemize}
+                \item Codeforces: 2077 ms
+                \item Atcoder: 1065 ms
+                \item QOJ: 1146 ms
+            \end{itemize}}
+            \code{src/misc/test_floyd_bitset.cpp}
+
+        \subsubsection{Basic operations | 基本运算}
+            \txt{\begin{itemize}
+                \item Codeforces: 3015 ms
+                \item Atcoder: 1512 ms
+                \item QOJ: 1132 ms
+            \end{itemize}}
+            \code{src/misc/test_normal.cpp}
+
+        \subsubsection{Float operations | 浮点运算}
+            \txt{\begin{itemize}
+                \item Codeforces: 1327 ms
+                \item Atcoder: 1324 ms
+                \item QOJ: 1233 ms
+            \end{itemize}}
+            \code{src/misc/test_float.cpp}
+
+        \subsubsection{STL performance | 1e6 STL性能}
+            \txt{\begin{itemize}
+                \item Codeforces: 2484 ms
+                \item Atcoder: 1526 ms
+                \item QOJ: 1221 ms
+            \end{itemize}}
+            \code{src/misc/test_stl.cpp}
+
+    \subsection{Shell script | 编译脚本}
+
+        \subsubsection{main.sh | 编译运行}
+            \shcode{src/misc/main.sh}
+
+        \subsubsection{checker.sh | 对拍脚本}
+            \shcode{src/misc/checker.sh}
+
+        \subsubsection{checker\_spj.sh | SPJ 对拍脚本}
+            \shcode{src/misc/checker\_spj.sh}
+
+\section{Data structure | 数据结构}
+
+    \subsection{Disjoint union set | 并查集}
+        \code{src/data_structure/disjoint_union_set.cpp}
+
+    \subsection{Disjoint union set rollback | 可撤销并查集}
+        \code{src/data_structure/disjoint_union_set_rollback.cpp}
+
+    \subsection{Disjoint union set range | 倍增并查集}
+        \code{src/data_structure/disjoint_union_set_range.cpp}
+
+    \subsection{Sparse table | ST 表}
+        \code{src/data_structure/sparse_table.cpp}
+
+    \subsection{Fenwick tree | 树状数组}
+        \code{src/data_structure/fenwick_tree.cpp}
+
+    \subsection{Segment tree | 懒标记线段树}
+        \code{src/data_structure/segment_tree.cpp}
+
+    \subsection{Segment tree persistent | 可持久化线段树}
+        \txt{split(p, x, y, l, r, L, R):} \\
+        \txt{\begin{itemize}
+            \item p: 当前需要划分的根
+            \item x: 划分后 [L, R) 的部分 
+            \item y: 划分后剩余的部分
+        \end{itemize}} \\
+        \txt{merge(x, y, l, r):} \\
+        \txt{\begin{itemize}
+            \item x: 需要合并的树根
+            \item y: 需要合并的树根
+        \end{itemize}}
+
+        \code{src/data_structure/segment_tree_persistent.cpp}
+
+    \subsection{Segment tree beats | 区间 min/max 线段树}
+        \code{src/data_structure/segment_tree_beats.cpp}
+
+    \subsection{Segment tree line | 李超树}
+        \code{src/data_structure/segment_tree_line.cpp}
+
+    \subsection{Query tree | 线段树分治}
+        \code{src/data_structure/query_tree.cpp}
+
+    \subsection{Chtholly tree | 珂朵莉树}
+        \code{src/data_structure/chtholly_tree.cpp}
+
+    \subsection{Bit trie | 01 字典树}
+        \code{src/data_structure/bit_trie.cpp}
+    
+    \subsection{PBDS tree | PBDS 平衡树}
+        \txt{inset(x): 插入一个元素 x} \\
+        \txt{erase(it): 删除一个迭代器 it} \\
+        \txt{order\_of\_key(x): 返回严格小于 x 的数量} \\
+        \txt{find\_by\_order(x): 返回 cmp\_fn 排名为 x 的迭代器} \\
+        \txt{join(x, y): 合并两个集合 x 和 y，合并到 x 上，y 被清空} \\
+        \txt{split(x, k): 以 cmp\_fn 比较，小于等于 x 的属于当前树，其余的属于 b 树}
+
+        \code{src/data_structure/pbds_tree.cpp}
+
+\section{Graph | 图论}
+
+    \subsection{LCA | 最近公共祖先}
+        \code{src/graph/lca.cpp}
+    
+    \subsection{Cycle count | 普通环计数}
+        \txt{时间复杂度 $O(2^n * m)$，注意需要是 0base}
+        \code{src/graph/cycle_count.cpp}
+
+    \subsection{Cut edge | 割边}
+        \code{src/graph/tarjan_cut_edge.cpp}
+    
+    \subsection{Cut node | 割点}
+        \code{src/graph/tarjan_cut_node.cpp}
+    
+    \subsection{SCC | 强连通分量}
+        \code{src/graph/tarjan_scc.cpp}
+
+    \subsection{EBCC | 边双连通分量}
+        \code{src/graph/tarjan_ebcc.cpp}
+    
+    \subsection{VBCC | 点双连通分量 (点集)}
+        \code{src/graph/tarjan_vbcc_node.cpp}
+
+    \subsection{VBCC | 点双连通分量 (边集)}
+        \code{src/graph/tarjan_vbcc_edge.cpp}
+      
+    \subsection{2-SAT | 2-SAT}
+        \code{src/graph/2-sat.cpp}
+
+    \subsection{Virtual tree | 虚树}
+        \code{src/graph/virtual_tree.cpp}
+    
+
+\section{Flow | 网络流}
+
+\section{Misc | 杂项}
+
+    \subsection{Bitset | 暴力滴神}
+        \txt{set(x): 将 x 位设置为 1，如果不填则全部为 1} \\
+        \txt{reset(x): 将 x 位设置为 0，如果不填则全部为 0} \\
+        \txt{flip(x): 将 x 位取反，如果不填则全部取反} \\
+        \txt{count(): 返回 1 的个数} \\
+        \txt{size(): 返回位数} \\
+        \txt{any(): 返回是否存在 1} \\
+        \txt{\_Find\_fisrt(): 返回第一个 1 的位置} \\
+        \txt{\_Find\_next(x): 返回 x 之后第一个 1 的位置} \\
+
+\section{Temp | 临时式子整理}
+
+    \subsection{交换律}
+    $p(k)$ 是指标集 $k$ 的一个排列。
+    \begin{align*}
+        \sum_{i \in k} a_i &= \sum_{i \in p(k)} a_i \\
+        a_1 + a_2 + a_3 + a_4 &= a_2 + a_1 + a_3 + a_4
+    \end{align*}
+
+    \subsection{结合律}
+    \begin{align*}
+        \sum_{i=1}^{n} a_i + \sum_{i=1}^{n} b_i = \sum_{i=1}^{n} (a_i + b_i)
+    \end{align*}
+
+    \subsection{分配律}
+    \begin{align*}
+        \sum_{i} c \cdot a_i = c \cdot \sum_{i} a_i
+    \end{align*}
+
+
+\section{Summation Transformation | 和式的变换技巧}
+    \subsection{替换条件式}
+    把写在求和符号下标位置的条件改为艾弗森括号的形式，使总的求和式化为枚举所有变量的求和式，便于处理。
+    \begin{align*}
+        \sum_{d|\gcd(i,j)} f(d) = \sum_{d=1}^{\min(i,j)} [d|i][d|j]f(d)
+    \end{align*}
+
+    \subsection{替换指标变量}
+    \begin{align*}
+        &\sum_{i=1}^{n} \sum_{j=1}^{m} [\gcd(i,j) = k] \\
+        &= \sum_{i=1}^{\lfloor n/k \rfloor} \sum_{j=1}^{\lfloor m/k \rfloor} [\gcd(ik,jk)=k] \\
+        &= \sum_{i=1}^{\lfloor n/k \rfloor} \sum_{j=1}^{\lfloor m/k \rfloor} [\gcd(i,j)=1]
+    \end{align*}
+    \begin{align*}
+        \sum_{i=0}^{n} (-1)^{n-i} f(n-i) = \sum_{i=0}^{n} (-1)^{i} f(i)
+    \end{align*}
+
+    \subsection{改变求和次序}
+    \subsubsection{基础}
+    \begin{align*}
+        \sum_i \sum_j f(i,j) 
+        &= \sum_i \sum_j f(i,j) [1 \le i \le n] [1 \le j \le i] \\
+        &= \sum_j \sum_i f(i,j) [1 \le j \le i] [1 \le i \le n] \\
+        &= \sum_j \sum_i f(i,j) [j \le i \le n] [1 \le j \le n] \\
+        &= \sum_{j=1}^{n} \sum_{i=j}^{n} f(i,j)
+    \end{align*}
+    \subsubsection{复杂的改变求和次序}
+    为了改变求和次序，有时候我们可能需要通过解析不等式的方式。
+    \begin{align*}
+        &\sum_{i=1}^{n} \sum_{j=i+1}^{n} f(i,j) \\
+        &= \sum_j \sum_i f(i,j) [1 \le i \le j-1] [2 \le j \le n] \\
+        &= \sum_{j=2}^{n} \sum_{i=1}^{j-1} f(i,j)
+    \end{align*}
+
+    \subsection{分离变量}
+    \begin{align*}
+        \sum_i \sum_j f(i)g(j) = \left( \sum_i f(i) \right) \left( \sum_j g(j) \right)
+    \end{align*}
+
+    \subsection{改变枚举范围}
+    \subsubsection{扩大枚举范围}
+    扩大范围可以将变量有关的枚举上下界改变为常量，便于进行下一步处理。
+    \begin{align*}
+        &\sum_{i=1}^{n} \sum_{j=1}^{m} \sum_{d=1}^{\min(i,j)} [d|i][d|j]f(d) \\
+        &= \sum_{d=1}^{n} \sum_{i=1}^{n} \sum_{j=1}^{m} [d|i][d|j]f(d)
+    \end{align*}
+
+    \subsubsection{缩小枚举范围}
+    缩小枚举范围使枚举条件简化，也是一个常见技巧。
+    \begin{align*}
+        &\sum_{i=1}^{n} \sum_{j=1}^{m} [\gcd(i,j) = k] \\
+        &= \sum_{i=1}^{\lfloor n/k \rfloor} \sum_{j=1}^{\lfloor m/k \rfloor} [\gcd(i,j)=1]
+    \end{align*}
+
+    \subsection{示例：组合数}
+    设组合数 $\binom{n}{k}$ 表示从 $n$ 个不同物品中取出 $k$ 个，不考虑取出的顺序，有多少种方案。
+    \begin{align*}
+        &\sum_{i=0}^{n-1} \binom{n-1}{i} n^{i+1} + \sum_{i=0}^{n} \binom{n-1}{i} n^i \\
+        &= \sum_{i=0}^{n} \binom{n-1}{i} n^{i+1} + \sum_{i=0}^{n} \binom{n-1}{i} n^i \\
+        &= \sum_{i=0}^{n} \binom{n-1}{i-1} n^{i} + \sum_{i=0}^{n} \binom{n-1}{i} n^i \\
+        &= \sum_{i=0}^{n} \left(\binom{n-1}{i-1} + \binom{n-1}{i}\right) n^i \\
+        &= \sum_{i=0}^{n} \binom{n}{i} n^i
+    \end{align*}
+
+    \subsection{和式的变换公式}
+    \subsubsection{公式 1}
+    这个式子似乎没什么用。
+    \begin{align*}
+        \left(\sum_{i=1}^{n} a_i\right)^2 = \sum_{i=1}^{n} a_i^2 + 2 \sum_{1 \le i < j \le n} a_i a_j
+    \end{align*}
+
+    \subsubsection{公式 2}
+    这个公式也是需要背的，因为其实用化不了时间复杂度，直接背比较好。证明也很容易：
+    \begin{align*}
+        &\sum_{1 \le i < j \le n} (a_i - a_j)^2 \\
+        &= \sum_{1 \le i < j \le n} (a_i^2 + a_j^2 - 2a_i a_j) \\
+        &= \sum_{1 \le i < j \le n} a_i^2 + \sum_{1 \le i < j \le n} a_j^2 - 2\sum_{1 \le i < j \le n} a_i a_j \\
+        &= (n-1)\sum_{i=1}^{n} a_i^2 - \left(\left(\sum_{i=1}^{n} a_i\right)^2 - \sum_{i=1}^{n} a_i^2\right) \\
+        &= n \sum_{i=1}^{n} a_i^2 - \left(\sum_{i=1}^{n} a_i\right)^2
+    \end{align*}
+
+    \subsection{阿贝尔部分求和公式}
+    这个式子也是中看不中用。
+    \begin{align*}
+        &\sum_{i=1}^{n} a_i b_i = \\
+        &b_n \sum_{i=1}^{n} a_i - \sum_{i=1}^{n-1} \left(\sum_{j=1}^{i} a_j\right) (b_{i+1} - b_i)
+    \end{align*}
+
+\end{multicols}
+\end{document}
