@@ -1,0 +1,147 @@
+template <class T>
+class KuhnMunkresBFS
+{
+private:
+    const T low = std::numeric_limits<T>::min() / 2;
+    const T high = std::numeric_limits<T>::max() / 2;
+    int n;                             // 顶点数量
+    std::vector<std::vector<T>> graph; // 邻接矩阵表示的带权二分图
+    std::vector<T> A;                  // 左部顶点的顶标
+    std::vector<T> B;                  // 右部顶点的顶标
+    std::vector<int> match;            // 匹配结果，match[v] = u表示右部点v匹配左部点u
+    std::vector<T> slack;              // 松弛量数组
+    std::vector<int> vis;              // 访问标记数组
+    std::vector<int> pre;              // 前驱数组，用于记录增广路径
+
+    /**
+     * @brief BFS寻找增广路
+     * @param u 起始的左部顶点
+     */
+    void bfs(int u)
+    {
+        std::fill(vis.begin(), vis.end(), 0);        // 重置访问标记
+        std::fill(slack.begin(), slack.end(), high); // 重置松弛量
+
+        int x = u, y = 0; // x:当前左部点，y:当前右部点
+        match[0] = u;     // 哨兵值，便于后续处理
+
+        while (true)
+        {
+            vis[y] = true; // 标记当前右部点已访问
+
+            // 寻找最小松弛量和对应的右部点
+            T minSlack = high;
+            int nextY = 0;
+
+            for (int i = 1; i <= n; ++i)
+            {
+                if (vis[i])
+                    continue; // 跳过已访问的右部点
+
+                // 计算当前松弛量
+                T currentSlack = A[x] + B[i] - graph[x][i];
+
+                // 更新松弛量数组和前驱
+                if (currentSlack < slack[i])
+                {
+                    slack[i] = currentSlack;
+                    pre[i] = y; // 记录前驱
+                }
+
+                // 跟踪最小松弛量
+                if (slack[i] < minSlack)
+                {
+                    minSlack = slack[i];
+                    nextY = i;
+                }
+            }
+
+            // 调整顶标
+            A[u] -= minSlack; // 调整起始左部点顶标
+
+            for (int i = 1; i <= n; ++i)
+            {
+                if (vis[i])
+                {
+                    // 对于已访问的右部点，调整其和匹配左部点的顶标
+                    B[i] += minSlack;
+                    A[match[i]] -= minSlack;
+                }
+                else
+                {
+                    // 对于未访问的右部点，减少松弛量
+                    slack[i] -= minSlack;
+                }
+            }
+
+            y = nextY; // 移动到最小松弛量对应的右部点
+
+            if (match[y] == 0)
+                break; // 找到未匹配点，可以增广
+
+            x = match[y]; // 继续从匹配的左部点开始搜索
+        }
+
+        // 更新匹配关系
+        while (y != 0)
+        {
+            match[y] = match[pre[y]]; // 沿着前驱链回溯更新匹配
+            y = pre[y];
+        }
+    }
+
+public:
+    /**
+     * @brief 构造函数，初始化KM算法
+     * @param n 顶点数量
+     * @param edges 边的三元组(u, v, w)列表
+     */
+    KuhnMunkresBFS(int n, const std::vector<std::tuple<int, int, int>> &edges)
+        : n(n), graph(n + 1, std::vector<T>(n + 1, low)),
+          A(n + 1, low), B(n + 1, 0),
+          match(n + 1, 0), slack(n + 1), vis(n + 1), pre(n + 1)
+    {
+
+        // 初始化邻接矩阵
+        for (const auto &[u, v, w] : edges)
+        {
+            graph[u][v] = w;
+        }
+
+        // 初始化左部顶标为出边最大权值
+        for (int u = 1; u <= n; ++u)
+        {
+            for (int v = 1; v <= n; ++v)
+            {
+                if (graph[u][v] > A[u])
+                {
+                    A[u] = graph[u][v];
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief 计算最大权完美匹配
+     * @return 匹配结果和总权重
+     */
+    std::pair<std::vector<int>, T> solve()
+    {
+        for (int u = 1; u <= n; ++u)
+        {
+            bfs(u); // 为每个左部顶点寻找匹配
+        }
+
+        // 计算总权重
+        T totalWeight = 0;
+        for (int v = 1; v <= n; ++v)
+        {
+            if (match[v] > 0)
+            {
+                totalWeight += graph[match[v]][v];
+            }
+        }
+
+        return {match, totalWeight};
+    }
+};

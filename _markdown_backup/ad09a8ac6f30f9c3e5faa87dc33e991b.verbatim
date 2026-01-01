@@ -1,0 +1,154 @@
+template <class T>
+struct MinCostFlowEK
+{
+    struct _Edge
+    {
+        int to;
+        T cap;
+        T cost;
+        _Edge(int to_, T cap_, T cost_) : to(to_), cap(cap_), cost(cost_) {}
+    };
+
+    int n;
+    std::vector<_Edge> e;
+    std::vector<std::vector<int>> g;
+    std::vector<T> h;     // 节点势
+    std::vector<T> dis;   // Dijkstra 或 SPFA 计算出的距离
+    std::vector<int> pre; // BFS/增广路径前驱
+    bool ok = false;
+    const T INF = std::numeric_limits<T>::max() / 4;
+
+    MinCostFlowEK() {}
+    MinCostFlowEK(int n_) { init(n_); }
+
+    void init(int n_)
+    {
+        n = n_;
+        e.clear();
+        g.assign(n + 1, {});
+        h.assign(n + 1, 0);
+        ok = false;
+    }
+
+    void add(int u, int v, T cap, T cost)
+    {
+        ok |= (cost < 0);
+        g[u].push_back((int)e.size());
+        e.emplace_back(v, cap, cost);
+        g[v].push_back((int)e.size());
+        e.emplace_back(u, 0, -cost);
+    }
+
+private:
+    void SPFA(int s)
+    {
+        dis.assign(n + 1, INF);
+        std::vector<bool> inq(n + 1, false);
+        std::queue<int> q;
+        dis[s] = 0;
+        q.push(s);
+        inq[s] = true;
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inq[u] = false;
+            for (int i : g[u])
+            {
+                auto &E = e[i];
+                if (E.cap > 0 && dis[E.to] > dis[u] + E.cost)
+                {
+                    dis[E.to] = dis[u] + E.cost;
+                    if (!inq[E.to])
+                    {
+                        q.push(E.to);
+                        inq[E.to] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Dijkstra + potentials
+    bool dijkstra(int s, int t)
+    {
+        dis.assign(n + 1, INF);
+        using pti = std::pair<T, int>;
+        std::priority_queue<pti, std::vector<pti>, std::greater<pti>> pq;
+        dis[s] = 0;
+        pq.push({0, s});
+        while (!pq.empty())
+        {
+            auto [d, u] = pq.top();
+            pq.pop();
+            if (dis[u] < d)
+                continue;
+            for (int i : g[u])
+            {
+                auto &E = e[i];
+                T c = E.cost + h[u] - h[E.to];
+                if (E.cap > 0 && dis[E.to] > dis[u] + c)
+                {
+                    dis[E.to] = dis[u] + c;
+                    pre[E.to] = i; // 记录前驱边
+                    pq.push({dis[E.to], E.to});
+                }
+            }
+        }
+        return dis[t] != INF;
+    }
+
+public:
+    std::pair<T, T> work(int s, int t)
+    {
+        T flow = 0, cost = 0;
+        if (ok)
+        {
+            SPFA(s);
+            for (int i = 0; i <= n; i++)
+                if (dis[i] < INF)
+                    h[i] = dis[i];
+        }
+
+        pre.assign(n + 1, -1);
+
+        while (dijkstra(s, t))
+        {
+            // 更新势
+            for (int i = 0; i <= n; i++)
+                if (dis[i] < INF)
+                    h[i] += dis[i];
+
+            // 找到最小增广量
+            T f = INF;
+            for (int u = t; u != s; u = e[pre[u] ^ 1].to)
+                f = std::min(f, e[pre[u]].cap);
+
+            // 增广
+            for (int u = t; u != s; u = e[pre[u] ^ 1].to)
+            {
+                e[pre[u]].cap -= f;
+                e[pre[u] ^ 1].cap += f;
+            }
+
+            flow += f;
+            cost += f * h[t]; // 原始对偶特性：h[t] = 本次增广的真实成本
+        }
+
+        return {flow, cost};
+    }
+
+    struct Edge
+    {
+        int from, to;
+        T cap, cost, flow;
+    };
+
+    std::vector<Edge> edges()
+    {
+        std::vector<Edge> res;
+        for (size_t i = 0; i < e.size(); i += 2)
+            res.push_back({e[i ^ 1].to, e[i].to, e[i].cap + e[i ^ 1].cap, e[i].cost, e[i ^ 1].cap});
+        return res;
+    }
+};

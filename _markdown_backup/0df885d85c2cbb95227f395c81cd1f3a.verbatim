@@ -1,0 +1,144 @@
+template <class T>
+class TreePre
+{
+
+private:
+    int n;
+    int idx = 0;
+    int root;
+    std::vector<std::vector<std::pair<int, int>>> &g;
+    void dfs1(int u, int f)
+    {
+        fa[u] = f;
+        siz[u] = 1;
+        for (auto [v, w] : g[u])
+        {
+            if (v != f)
+            {
+                dep[v] = dep[u] + 1;
+                dis[v] = dis[u] + w;
+                dfs1(v, u);
+                siz[u] += siz[v];
+                if (siz[son[u]] < siz[v])
+                {
+                    son[u] = v;
+                }
+            }
+        }
+    }
+    void dfs2(int u, int tp)
+    {
+        dfn[u] = ++idx;
+        idfn[idx] = u;
+        top[u] = tp;
+        if (son[u])
+        {
+            dfs2(son[u], tp);
+        }
+        for (auto [v, w] : g[u])
+        {
+            if (v != fa[u] and v != son[u])
+            {
+                dfs2(v, v);
+            }
+        }
+    }
+
+public:
+    TreePre(std::vector<std::vector<std::pair<int, int>>> &g, int root)
+        : g(g), n(g.size() - 1), root(root), dep(n + 1), top(n + 1), son(n + 1), fa(n + 1), siz(n + 1), dfn(n + 1), idfn(n + 1), dis(n + 1)
+    {
+        dep[root] = 1;
+        dis[root] = 0;
+        dfs1(root, 0);
+        dfs2(root, root);
+    }
+    std::vector<int> dfn, idfn, siz, fa, dep, top, son;
+    std::vector<T> dis;
+    int kthAncester(int u, int k) // k级祖先
+    {
+        if (dep[u] <= k)
+        {
+            return -1;
+        }
+        int d = dep[u] - k;
+        while (dep[top[u]] > d)
+        {
+            u = fa[top[u]];
+        }
+        return idfn[dfn[u] - dep[u] + d];
+    }
+    int getLca(int u, int v) // u和v在指定根下的lca
+    {
+        while (top[u] != top[v])
+        {
+            if (dep[top[u]] > dep[top[v]])
+            {
+                u = fa[top[u]];
+            }
+            else
+            {
+                v = fa[top[v]];
+            }
+        }
+        return dep[u] < dep[v] ? u : v;
+    }
+    T getDistance(int u, int v) // u和v之间的距离
+    {
+        return dis[u] + dis[v] - 2 * dis[getLca(u, v)];
+    }
+    bool isAncester(int u, int v) // u是不是v的祖先
+    {
+        return dfn[u] <= dfn[v] and dfn[u] + siz[u] - 1 >= dfn[v];
+    }
+
+    auto getRoad(int u, int v) // 得到uv之间路径的dfn序
+    {
+        std::vector<std::pair<int, int>> res;
+        while (top[u] != top[v])
+        {
+            if (dep[top[u]] < dep[top[v]])
+            {
+                std::swap(u, v);
+            }
+            res.push_back({dfn[top[u]], dfn[u]});
+            u = fa[top[u]];
+        }
+        if (dep[u] > dep[v])
+        {
+            std::swap(u, v);
+        }
+        res.push_back({dfn[u], dfn[v]});
+        return res;
+    }
+
+    int rootedFather(int u, int root) // u在root为根的情况下的父节点
+    {
+        if (!isAncester(u, root)) // u不是root的祖先 那么父节点不变
+        {
+            return fa[u];
+        }
+        auto it = std::upper_bound(g[u].begin(), g[u].end(), root, [&](int x, int y)
+                                   { return dfn[x] < dfn[y]; });
+        --it;
+        return *it;
+        // 把u的邻点按dfn序排序后 dfn最大且  dfn[u]<=dfn[root]的点
+    }
+
+    int rootedSize(int u, int root) // root为根的情况下u的子树大小
+    {
+        if (root == u)
+        {
+            return n;
+        }
+        if (!isAncester(u, root)) // u不是根的祖先
+        {
+            return siz[u];
+        }
+        return n - siz[rootedFather(u, root)];
+    }
+    int rootedLca(int root, int u, int v)
+    {
+        return getLca(u, v) ^ getLca(u, root) ^ getLca(v, root);
+    }
+};

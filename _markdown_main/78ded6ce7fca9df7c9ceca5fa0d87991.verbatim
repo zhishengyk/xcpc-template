@@ -1,0 +1,65 @@
+struct PrimMST
+{
+    const int INF = 1e9;                             // 定义无穷大常量
+    int n;                                           // 顶点数量(下标从1开始)
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表存储图
+
+    // 构造函数，初始化顶点数量
+    PrimMST(int n) : n(n), g(n + 1) {}
+
+    // 添加无向边
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    // 执行Prim算法，返回最小生成树权值和，无法构成返回-1
+    int compute()
+    {
+        int Sum = 0;
+        int Num = 0;
+
+        // 定义配对堆类型，存储(距离, 顶点)对，使用小根堆
+        using PairingHeap = __gnu_pbds::priority_queue<
+            std::pair<int, int>,
+            std::greater<std::pair<int, int>>,
+            __gnu_pbds::pairing_heap_tag>;
+
+        PairingHeap pq;
+        std::vector<PairingHeap::point_iterator> handlers(n + 1);
+
+        // 初始化优先队列，所有节点距离设为INF，起点距离为0
+        handlers[1] = pq.push({0, 1});
+        for (int i = 2; i <= n; ++i)
+        {
+            handlers[i] = pq.push({INF, i});
+        }
+
+        while (!pq.empty())
+        {
+            auto [dist, u] = pq.top();
+            pq.pop();
+
+            if (dist == INF)
+            {
+                return -1; // 存在不连通节点
+            }
+
+            Sum += dist;
+            Num++;
+            handlers[u] = nullptr; // 标记已处理
+
+            // 遍历邻接节点
+            for (const auto &[v, w] : g[u])
+            {
+                if (handlers[v] != nullptr && w < handlers[v]->first)
+                {
+                    pq.modify(handlers[v], {w, v});
+                }
+            }
+        }
+
+        return (Num == n) ? Sum : -1;
+    }
+};

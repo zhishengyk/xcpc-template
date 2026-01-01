@@ -1,0 +1,202 @@
+template <class T>
+struct MinCostFlow
+{
+    struct _Edge
+    {
+        int to;
+        T cap;
+        T cost;
+        _Edge(int to_, T cap_, T cost_) : to(to_), cap(cap_), cost(cost_) {}
+    };
+
+    int n;
+    std::vector<_Edge> e;
+    std::vector<std::vector<int>> g;
+    std::vector<T> h;     // 节点势 (potential)
+    std::vector<T> dis;   // Dijkstra 或 SPFA 计算出的距离
+    std::vector<int> dep; // 用于 Dinic 的分层
+    std::vector<int> cur; // 当前弧优化 (在 dfs 中隐式使用)
+
+    bool ok = false; // 自动检测负权边的标志
+    const T INF = std::numeric_limits<T>::max() / 4;
+
+    MinCostFlow() {}
+    MinCostFlow(int n_) { init(n_); }
+
+    void init(int n_)
+    {
+        n = n_;
+        e.clear();
+        g.assign(n + 1, {});
+        h.assign(n + 1, 0);
+        ok = false; // 重置标志
+    }
+
+    void add(int u, int v, T cap, T cost)
+    {
+        ok |= (cost < 0);
+        g[u].push_back((int)e.size());
+        e.emplace_back(v, cap, cost);
+        g[v].push_back((int)e.size());
+        e.emplace_back(u, 0, -cost);
+    }
+
+private:
+    // 仅在有负权边时，用于计算初始势的 SPFA
+    void SPFA(int s)
+    {
+        dis.assign(n + 1, INF);
+        std::vector<bool> inq(n + 1, false);
+        std::queue<int> q;
+        dis[s] = 0;
+        q.push(s);
+        inq[s] = true;
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inq[u] = false;
+            for (int i : g[u])
+            {
+                auto &t = e[i];
+                if (t.cap > 0 && dis[t.to] > dis[u] + t.cost)
+                {
+                    dis[t.to] = dis[u] + t.cost;
+                    if (!inq[t.to])
+                    {
+                        q.push(t.to);
+                        inq[t.to] = true;
+                    }
+                }
+            }
+        }
+    }
+    // 使用 Dijkstra 寻找最短路，边权为 cost + h[u] - h[v]
+    bool dijkstra(int s, int t)
+    {
+        dis.assign(n + 1, INF);
+        dis[s] = 0;
+        using pti = std::pair<T, int>;
+        std::priority_queue<pti, std::vector<pti>, std::greater<pti>> pq;
+        pq.push({0, s});
+
+        while (!pq.empty())
+        {
+            auto [d, u] = pq.top();
+            pq.pop();
+            if (dis[u] < d)
+                continue;
+            for (int i : g[u])
+            {
+                auto &t = e[i];
+                T c = t.cost + h[u] - h[t.to];
+                if (t.cap > 0 && dis[t.to] > dis[u] + c)
+                {
+                    dis[t.to] = dis[u] + c;
+                    pq.push({dis[t.to], t.to});
+                }
+            }
+        }
+        return dis[t] != INF;
+    }
+    // 在可接受网络上（缩减成本为0的边）构建分层图
+    bool bfs(int s, int t)
+    {
+        dep.assign(n + 1, 0);
+        dep[s] = 1;
+        std::queue<int> q;
+        q.push(s);
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            for (int i : g[u])
+            {
+                auto &t = e[i];
+                if (t.cap > 0 && !dep[t.to] && t.cost + h[u] - h[t.to] == 0)
+                {
+                    dep[t.to] = dep[u] + 1;
+                    q.push(t.to);
+                }
+            }
+        }
+        return dep[t] != 0;
+    }
+    T dfs(int u, int t, T limit)
+    {
+        if (u == t)
+            return limit;
+        T used = 0;
+        for (int i : g[u])
+        {
+            if (used == limit)
+                break;
+            auto &E = e[i];
+            if (E.cap > 0 && dep[E.to] == dep[u] + 1 && E.cost + h[u] - h[E.to] == 0)
+            {
+                T f = dfs(E.to, t, std::min(limit - used, E.cap));
+                if (f > 0)
+                {
+                    E.cap -= f;
+                    e[i ^ 1].cap += f;
+                    used += f;
+                }
+            }
+        }
+        if (used == 0)
+            dep[u] = 0;
+        return used;
+    }
+
+public:
+    // 主过程：原始对偶算法
+    std::pair<T, T> work(int s, int t)
+    {
+        T flow = 0, cost = 0;
+        // **智能初始化**：如果检测到负权边，则运行一次 SPFA 初始化势 h
+        if (ok)
+        {
+            SPFA(s);
+            for (int i = 0; i <= n; ++i)
+            {
+                if (dis[i] < INF)
+                    h[i] = dis[i];
+            }
+        }
+        // 主循环：不断用 Dijkstra 寻找增广路
+        while (dijkstra(s, t))
+        {
+            for (int i = 0; i <= n; ++i)
+            {
+                if (dis[i] < INF)
+                {
+                    h[i] += dis[i];
+                }
+            }
+            T f = 0;
+            while (bfs(s, t))
+            {
+                f += dfs(s, t, std::numeric_limits<T>::max());
+            }
+
+            flow += f;
+            cost += f * h[t];
+        }
+        return {flow, cost};
+    }
+
+    struct Edge
+    {
+        int from, to;
+        T cap, cost, flow;
+    };
+    std::vector<Edge> edges()
+    {
+        std::vector<Edge> a;
+        for (size_t i = 0; i < e.size(); i += 2)
+        {
+            a.push_back({e[i ^ 1].to, e[i].to, e[i].cap + e[i ^ 1].cap, e[i].cost, e[i ^ 1].cap});
+        }
+        return a;
+    }
+};

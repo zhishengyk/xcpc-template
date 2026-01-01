@@ -1,0 +1,136 @@
+struct DominatorTree
+{
+    int n, r;
+    std::vector<std::vector<int>> G, rG;  // 原图和反图
+    std::vector<int> dfn, idfn, parent;   // dfn[u] = DFS序, idfn[i] = DFS序为i的节点, parent[u] = DFS树父节点
+    std::vector<int> sdom, idom;          // 半支配点和直接支配点
+    std::vector<int> fa, mn;              // 并查集结构
+    std::vector<std::vector<int>> bucket; // 分组处理sdom
+
+    DominatorTree(int n, int r) : n(n), r(r), G(n + 1), rG(n + 1) {}
+
+    void addEdge(int u, int v)
+    {
+        G[u].push_back(v);
+        rG[v].push_back(u); // 同时构建反图
+    }
+
+    void dfs(int u)
+    {
+        dfn[u] = idfn.size();
+        idfn.push_back(u);
+        for (int v : G[u])
+        {
+            if (!dfn[v])
+            { // 未访问过
+                parent[v] = u;
+                dfs(v);
+            }
+        }
+    }
+
+    // 并查集：路径压缩 + 维护sdom最小值
+    int find(int u)
+    {
+        if (fa[u] == u)
+            return u;
+        int root = find(fa[u]);
+        if (dfn[sdom[mn[fa[u]]]] < dfn[sdom[mn[u]]])
+        {
+            mn[u] = mn[fa[u]]; // 更新最小值
+        }
+        return fa[u] = root; // 路径压缩
+    }
+
+    // 构建支配树，返回idom数组（idom[u] = u的直接支配点）
+    std::vector<int> build()
+    {
+        // Step 1: 初始化
+        dfn.assign(n + 1, 0);
+        parent.assign(n + 1, 0);
+        idfn.push_back(0); // 占位，使id[1..n]有效
+        dfs(r);            // 从根节点开始DFS
+
+        // Step 2: 初始化sdom和idom
+        sdom.resize(n + 1);
+        idom.resize(n + 1);
+        for (int i = 1; i <= n; ++i)
+        {
+            sdom[i] = i;
+            idom[i] = 0; // 初始化为0（无效值）
+        }
+
+        // Step 3: 并查集初始化
+        fa.resize(n + 1);
+        mn.resize(n + 1);
+        for (int i = 1; i <= n; ++i)
+        {
+            fa[i] = mn[i] = i;
+        }
+
+        bucket.resize(n + 1);
+        // Step 4: 按DFS序逆序处理（从大到小）
+        for (int i = (int)idfn.size() - 1; i >= 2; --i)
+        { // 跳过根节点（i=1）
+            int u = idfn[i];
+
+            // Step 4.1: 计算sdom[u]
+            for (int v : rG[u])
+            { // 遍历反图（即原图的前驱）
+                if (!dfn[v])
+                    continue; // 跳过不可达节点
+                if (dfn[v] < dfn[u])
+                {
+                    sdom[u] = dfn[v] < dfn[sdom[u]] ? v : sdom[u];
+                }
+                else
+                {
+                    find(v); // 路径压缩
+                    sdom[u] = dfn[sdom[mn[v]]] < dfn[sdom[u]] ? sdom[mn[v]] : sdom[u];
+                }
+            }
+            bucket[sdom[u]].push_back(u);
+
+            // Step 4.2: 合并到父节点
+            if (parent[u])
+            {
+                merge(parent[u], u);
+            }
+
+            // Step 4.3: 处理bucket中的节点
+            for (int v : bucket[parent[u]])
+            {
+                find(v);
+                if (sdom[mn[v]] == parent[u])
+                {
+                    idom[v] = parent[u];
+                }
+                else
+                {
+                    idom[v] = mn[v]; // 暂时存储，后续修正
+                }
+            }
+            bucket[parent[u]].clear();
+        }
+
+        // Step 5: 修正idom
+        for (int i = 2; i < idfn.size(); ++i)
+        { // 跳过根节点（i=1）
+            int u = idfn[i];
+            if (idom[u] != sdom[u])
+            {
+                idom[u] = idom[idom[u]];
+            }
+        }
+        // 根节点的idom设为0（表示无支配点）
+        idom[r] = 0;
+        return idom;
+    }
+
+private:
+    // 并查集合并操作
+    void merge(int u, int v)
+    {
+        fa[v] = u;
+    }
+};

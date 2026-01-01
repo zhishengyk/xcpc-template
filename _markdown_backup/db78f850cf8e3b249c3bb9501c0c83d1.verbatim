@@ -1,0 +1,52 @@
+struct PointerDivide
+{
+    std::vector<std::vector<std::pair<int, int>>> &g;
+    std::vector<int> siz, dfn, vis;
+    std::vector<std::vector<int>> pdt;
+    int root;
+
+    void dfsSize(int u, int fa)
+    {
+        siz[u] = 1;
+        for (auto [v, w] : g[u])
+        {
+            if (v != fa and !vis[v])
+            {
+                dfsSize(v, u);
+                siz[u] += siz[v];
+            }
+        }
+    }
+    int getRoot(int u, int fa, int Size)
+    {
+        for (auto [v, w] : g[u])
+        {
+            if (v != fa and !vis[v] and 2 * siz[v] > Size)
+            {
+                return getRoot(v, u, Size);
+            }
+        }
+        return u;
+    }
+    void build(int u)
+    {
+        vis[u] = true;
+        dfn.push_back(u);
+        for (auto [v, w] : g[u])
+        {
+            if (!vis[v])
+            {
+                dfsSize(v, -1);
+                v = getRoot(v, -1, siz[v]);
+                // pdt[u].push_back(v);
+                build(v);
+            }
+        }
+    }
+    PointerDivide(std::vector<std::vector<std::pair<int, int>>> &g) : g(g), siz(g.size()), vis(g.size())
+    {
+        dfsSize(1, 0);
+        root = getRoot(1, 0, siz[1]);
+        build(root);
+    }
+};

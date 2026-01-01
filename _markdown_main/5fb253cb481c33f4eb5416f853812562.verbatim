@@ -1,0 +1,111 @@
+class HungaryCriticalPoints
+{
+private:
+    int n;                                  // 顶点数量
+    const std::vector<std::vector<int>> &g; // 图的邻接表表示
+    std::vector<int> left;                  // 左部点集合
+    std::vector<int> matchl;                // 左部点的匹配点 (matchl[u] = v 表示左部点u匹配右部点v)
+    std::vector<int> matchr;                // 右部点的匹配点 (matchr[v] = u 表示右部点v匹配左部点u)
+    std::vector<int> pos;                   // 标记是左部点 还是右部点 左部点为1 右部点为0
+
+public:
+    /**
+     * @brief 构造函数，初始化匈牙利算法关键点查找器
+     * @param g 图的邻接表表示，g.size() = n+1，顶点编号从1开始
+     * @param left 左部点集合
+     */
+    HungaryCriticalPoints(const std::vector<std::vector<int>> &g, std::vector<int> left)
+        : g(g), n(g.size() - 1), left(left)
+    {
+
+        // 初始化匹配数组
+        pos.resize(n + 1, 0);
+        matchl.resize(n + 1, 0);
+        matchr.resize(n + 1, 0);
+        for (auto x : left) // 左部点标记为1
+        {
+            pos[x] = 1;
+        }
+        // 运行匈牙利算法找到最大匹配
+        Hungary hungary(g, left);
+
+        // 将匹配结果存入matchl和matchr
+        for (int v = 1; v <= n; ++v)
+        {
+            if (hungary.match[v] != 0)
+            {
+                matchl[hungary.match[v]] = v;
+                matchr[v] = hungary.match[v];
+            }
+        }
+    }
+
+    /**
+     * @brief 查找所有关键点
+     * @return 返回一个pair，first是左部关键点，second是右部关键点
+     */
+    std::pair<std::vector<int>, std::vector<int>> findCriticalPoints()
+    {
+        std::vector<bool> markl(n + 1, false); // 标记左部点是否被访问 未被访问是关键点
+        std::vector<bool> markr(n + 1, false); // 标记右部点是否被访问
+
+        // 从所有未匹配点出发进行BFS 左右两边分别做
+        std::queue<int> ql, qr;
+        for (int i = 1; i <= n; ++i)
+        {
+            if (pos[i] and matchl[i] == 0)
+            {
+                ql.push(i);
+                markl[i] = 1;
+            }
+            else if (!pos[i] and matchr[i] == 0) // 未盖点
+            {
+                qr.push(i);
+                markr[i] = 1;
+            }
+        }
+        // BFS标记交替路径上的点
+        while (!ql.empty())
+        {
+            int u = ql.front();
+            ql.pop();
+            for (auto v : g[u])
+            {
+                v = matchr[v];
+                if (!markl[v])
+                {
+                    ql.push(v);
+                    markl[v] = 1;
+                }
+            }
+        }
+        while (!qr.empty())
+        {
+            int u = qr.front();
+            qr.pop();
+            for (auto v : g[u])
+            {
+                v = matchl[v];
+                if (!markr[v])
+                {
+                    qr.push(v);
+                    markr[v] = 1;
+                }
+            }
+        }
+        // 收集关键点
+        std::vector<int> leftCritical, rightCritical;
+        for (int i = 1; i <= n; ++i)
+        {
+            if (pos[i] and !markl[i])
+            {
+                leftCritical.push_back(i);
+            }
+            else if (!pos[i] and !markr[i])
+            {
+                rightCritical.push_back(i);
+            }
+        }
+        return {leftCritical, rightCritical};
+    }
+};

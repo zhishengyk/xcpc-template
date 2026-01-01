@@ -1,0 +1,66 @@
+template <class T>
+struct BoruvkaMST
+{
+    int n;                                           // 顶点数量(下标从1开始)
+    int comp;                                        // 当前连通块数量
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表存储图
+    DSU dsu;                                         // 并查集结构
+
+    // 构造函数，初始化顶点数量和并查集
+    BoruvkaMST(int n) : n(n), comp(n), dsu(n + 1), g(n + 1) {}
+
+    // 添加无向边
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    // 执行Borůvka算法，返回最小生成树权值和，无法构成返回-1
+    T compute()
+    {
+        constexpr T inf = std::numeric_limits<T>::max() / 2;
+        T totalWeight = 0;
+        bool hasChanges = true;
+
+        while (hasChanges && comp > 1)
+        {
+            hasChanges = false;
+            std::vector<T> min(n + 1, inf);   // 当前连通块的最小边权值
+            std::vector<int> match(n + 1, 0); // 最小边对应的相邻连通块
+
+            // 第一步：寻找每个连通块的最小出边
+            for (int u = 1; u <= n; ++u)
+            {
+                int rootU = dsu.root(u);
+                for (const auto &[v, w] : g[u])
+                {
+                    int rootV = dsu.root(v);
+                    if (rootU != rootV && w < min[rootU])
+                    {
+                        min[rootU] = w;
+                        match[rootU] = rootV;
+                    }
+                }
+            }
+
+            // 第二步：合并连通块
+            for (int u = 1; u <= n; ++u)
+            {
+                if (match[u] != 0)
+                {
+                    int rootU = dsu.root(u);
+                    int rootV = dsu.root(match[u]);
+                    if (rootU != rootV)
+                    {
+                        dsu.merge(rootU, rootV);
+                        totalWeight += min[u];
+                        --comp;
+                        hasChanges = true;
+                    }
+                }
+            }
+        }
+        return comp == 1 ? totalWeight : -1;
+    }
+};

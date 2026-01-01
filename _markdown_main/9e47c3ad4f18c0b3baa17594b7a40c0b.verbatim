@@ -1,0 +1,94 @@
+// 比较函数：用于对节点按距离进行排序
+// 功能：当val[a] < val[b]时，a的排名在b之前（升序排序）
+// 参数：a, b为待比较的节点编号
+bool cmp(int a, int b)
+{
+    return val[a] < val[b];
+}
+
+// Floyd-Warshall算法：求解图中所有节点对之间的最短路径
+// 时间复杂度O(n³)，适用于节点数n不太大的情况
+void Floyd()
+{
+    // k为中间节点：枚举所有可能的中转节点
+    for (int k = 1; k <= n; k++)
+        // i为起点：枚举所有可能的起点
+        for (int i = 1; i <= n; i++)
+            // j为终点：枚举所有可能的终点
+            for (int j = 1; j <= n; j++)
+                // 松弛操作：通过k中转是否能缩短i到j的距离
+                d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+}
+void solve()
+{
+    // 第一步：先计算所有节点对的最短路径
+    Floyd();
+
+    // 第二步：对每个节点i，将其他节点按到i的距离排序
+    for (int i = 1; i <= n; i++)
+    {
+        for (int j = 1; j <= n; j++)
+        {
+            rk[i][j] = j;
+            val[j] = d[i][j];
+        }
+        sort(rk[i] + 1, rk[i] + 1 + n, cmp);
+    }
+
+    // 第三步：初始化答案
+    // 修正1：将ans的类型从int改为double，以精确存储半径
+    double ans = 1e9;
+
+    // 记录绝对中心位置的变量
+    bool ok = true;
+    int idx = -1;
+    int au = -1, av = -1;
+    double t = 0.0;
+    // 情况1：绝对中心在某个节点上
+    for (int i = 1; i <= n; i++)
+    {
+        int dis = d[i][rk[i][n]];
+        if (dis < ans)
+        {
+            ok = true;
+            ans = dis; // 将半径存入ans
+            idx = i;
+        }
+    }
+    // 情况2：绝对中心在某条边上（u-v，权重为w）
+    for (int i = 1; i <= m; i++)
+    {
+        int u = a[i].u;
+        int v = a[i].v;
+        int w = a[i].w;
+
+        for (int p = n, j = n - 1; j >= 1; j--)
+        {
+            // 这个双指针优化的逻辑是：对于每个j，找到一个p，使得(j, p)这对最远点构成的半径最小。
+            // p需要指向从j到n的节点中，距离v最远的那个。
+            // 首先更新p，使其成为从当前j到n的范围内离v最远的点
+            if (d[v][rk[u][j]] > d[v][rk[u][p]])
+            {
+                p = j;
+            }
+
+            // 然后用当前的j和最优的p来计算路径长度
+            int cur = d[u][rk[u][j]] + d[v][rk[u][p]] + w;
+
+            // 修正2：用计算出的新半径(cur/2.0)与ans(最小半径)进行比较
+            if (cur / 2.0 < ans)
+            {
+                // 修正3：ans存储的应该是半径，而不是路径长度
+                ans = cur / 2.0;
+                ok = false;
+                au = u;
+                av = v;
+                t = (d[v][rk[u][p]] + w - d[u][rk[u][j]]) / 2.0;
+                if (t < 0)
+                    t = 0;
+                if (t > w)
+                    t = w;
+            }
+        }
+    }
+}

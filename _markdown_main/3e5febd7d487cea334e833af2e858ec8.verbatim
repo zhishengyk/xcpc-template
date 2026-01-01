@@ -1,0 +1,91 @@
+class SegmentTreeGraph
+{
+#define lc u << 1
+#define rc u << 1 | 1
+
+public:
+    int tot;
+    int n;
+    std::vector<std::vector<std::pair<int, int>>> g;
+    SegmentTreeGraph(int n) : n(n), tot(n), in((n << 2) + 1), out((n << 2) + 1), g((n << 2) + 1) // 传入实际的点数
+    {
+        auto build = [&](auto build, int u, int l, int r) -> void
+        {
+            if (l == r)
+            {
+                in[u] = l;
+                out[u] = l;
+                return;
+            }
+            int mid = l + r >> 1;
+            build(build, lc, l, mid);
+            build(build, rc, mid + 1, r);
+            in[u] = ++tot;
+            out[u] = ++tot;
+            g[in[u]].emplace_back(in[lc], 0);
+            g[in[u]].emplace_back(in[rc], 0);
+            g[out[lc]].emplace_back(out[u], 0);
+            g[out[rc]].emplace_back(out[u], 0);
+        };
+        build(build, 1, 1, n);
+    }
+    void singleToRange(int u, int l, int r, int w)
+    {
+        singleToRange(1, 1, n, u, l, r, w);
+    }
+    void rangeToSingle(int u, int l, int r, int w)
+    {
+        rangeToSingle(1, 1, n, u, l, r, w);
+    }
+    void singleToSingle(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+    }
+    void rangeToRange(int l, int r, int x, int y, int w)
+    {
+        ++tot;
+        if (g.size() <= tot)
+        {
+            g.resize(tot + 1);
+        }
+        rangeToSingle(tot, l, r, 0);
+        singleToRange(tot, x, y, w);
+    }
+
+private:
+    std::vector<int> in, out;
+    void singleToRange(int u, int l, int r, int st, int x, int y, int w) // st为起点向[x,y]连边  不要边权就随便传
+    {
+        if (x <= l and y >= r)
+        {
+            g[st].emplace_back(in[u], w);
+            return;
+        }
+        int mid = l + r >> 1;
+        if (x <= mid)
+        {
+            singleToRange(lc, l, mid, st, x, y, w);
+        }
+        if (y > mid)
+        {
+            singleToRange(rc, mid + 1, r, st, x, y, w);
+        }
+    }
+    void rangeToSingle(int u, int l, int r, int ed, int x, int y, int w) //[x,y]向终点ed连边
+    {
+        if (x <= l and y >= r)
+        {
+            g[out[u]].emplace_back(ed, w);
+            return;
+        }
+        int mid = l + r >> 1;
+        if (x <= mid)
+        {
+            rangeToSingle(lc, l, mid, ed, x, y, w);
+        }
+        if (y > mid)
+        {
+            rangeToSingle(rc, mid + 1, r, ed, x, y, w);
+        }
+    }
+};

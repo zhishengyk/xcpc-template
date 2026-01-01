@@ -1,0 +1,47 @@
+struct RingTreeForest
+{
+    int cnt = 0;
+    int n;
+    std::vector<int> &fa; // 基环树的森林的出边/父边
+    std::vector<int> onRing, root, ringLen, pos, posOnRing;
+    // onRing[i]表示i是否在环上，root[i]表示i所在的树的根，ringLen存所有环的长度，pos[i]表示i点在哪个环上，posOnRing[i]表示i在环上的位置
+    std::vector<std::vector<int>> ring, id;
+    // ring[i]存环i的所有点，下标从0开始
+    std::vector<std::vector<int>> g;
+    RingTreeForest(std::vector<int> &b) : n(b.size()), fa(b), g(n), onRing(n, 0), root(n, 0), pos(n, 0), posOnRing(n, 0), ring(n)
+    {
+        std::vector<int> vis(n, 0);
+        for (int u = 1; u <= n - 1; ++u)
+        {
+            int v = u;
+            while (!vis[v] and v) // 防止跳到0
+            {
+                vis[v] = u;
+                v = fa[v];
+            }
+            if (vis[v] == u and v) // 跳到的不是0于是成环
+            {
+                ++cnt;
+                int k = v, cur = 0;
+                do
+                {
+                    ring[cnt].push_back(k);
+                    onRing[k] = 1;
+                    pos[k] = cnt;
+                    root[k] = k;
+                    posOnRing[k] = cur++;
+                    k = fa[k];
+                } while (k != v);
+                ringLen.push_back(cur);
+                // update a new ring
+            }
+        }
+        for (int i = 1; i <= n - 1; ++i)
+        {
+            if (!onRing[i] and fa[i]) // 不在环上且fa不为空
+            {
+                g[fa[i]].push_back(i);
+            }
+        }
+    }
+};

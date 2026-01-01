@@ -1,0 +1,39 @@
+struct Hungary
+{
+    int n;
+    const std::vector<std::vector<int>> &g;
+    std::vector<int> left;
+    int maxMatch;
+    std::vector<int> vis, match; // match记每个右部点匹配的左部点是谁
+    int cnt = 0;
+    bool dfs2(int u, int num) // 找增广路
+    {
+        for (auto v : g[u])
+        {
+            if (vis[v] == num)
+            {
+                continue;
+            }
+            vis[v] = num;
+            if (!match[v] or dfs2(match[v], num))
+            {
+                match[v] = u;
+                return true;
+            }
+        }
+        return false;
+    }
+    Hungary(const std::vector<std::vector<int>> &g, std::vector<int> L) : g(g), n(g.size() - 1), vis(n + 1), match(n + 1)
+    {
+        left = L;
+        maxMatch = 0;
+        for (auto i : left)
+        {
+            ++cnt; // 时间戳优化
+            if (dfs2(i, cnt))
+            {
+                ++maxMatch;
+            }
+        }
+    }
+};

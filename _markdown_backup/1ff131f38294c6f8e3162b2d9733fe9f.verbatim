@@ -1,0 +1,106 @@
+/**
+ * @brief 无源汇可行流求解器
+ */
+template <class G>
+class FeasibleFlow
+{
+public:
+    /**
+     * @brief 构造函数
+     * @param n 图中节点数量（不包括超级源汇）
+     * @param m 图中边数量
+     */
+    FeasibleFlow(int n, int m) : n(n), m(m), val(n + 2), ans(m + 1) {}
+
+    /**
+     * @brief 添加一条边
+     * @param u 边的起点
+     * @param v 边的终点
+     * @param lower 流量下界
+     * @param upper 流量上界
+     * @param id 边的标识符（用于结果输出）
+     */
+    void addEdge(int u, int v, G lower, G upper, int id)
+    {
+        edges.emplace_back(u, v, lower, upper, id);
+    }
+
+    /**
+     * @brief 求解可行流
+     * @return 是否存在可行流
+     */
+    bool solve()
+    {
+        // 初始化最大流算法（包含超级源汇S=0和T=n+1）
+        Flow<G> flow(n + 2);
+        const int S = 0, T = n + 1;
+
+        // 第一步：构建网络流图
+        for (const auto &[u, v, b, c, id] : edges)
+        {
+            // 添加边，容量为上界减下界
+            flow.add(u, v, c - b);
+            // 初始流量设为下界
+            ans[id] = b;
+            // 维护节点流量平衡（入流-出流）
+            val[v] += b;
+            val[u] -= b;
+        }
+
+        // 第二步：处理流量平衡约束
+        G sum = 0; // 记录需要补偿的总流量
+        for (int i = 1; i <= n; ++i)
+        {
+            if (val[i] > 0)
+            {
+                // 该节点需要额外流入val[i]流量
+                sum += val[i];
+                flow.add(S, i, val[i]);
+            }
+            else if (val[i] < 0)
+            {
+                // 该节点需要额外流出-val[i]流量
+                flow.add(i, T, -val[i]);
+            }
+        }
+
+        // 第三步：计算最大流
+        G f = flow.work(S, T);
+
+        // 判断是否存在可行流
+        if (f != sum)
+        {
+            return false; // 无法满足流量平衡约束
+        }
+
+        // 第四步：重构实际流量值
+        auto flowEdges = flow.getFlowEdges();
+        for (const auto &[from, to, flowVal] : flowEdges)
+        {
+            // 只处理原始图中的边（排除与超级源汇相连的边）
+            if (1 <= from && from <= n && 1 <= to && to <= n)
+            {
+                // ans[id]+=flowVal; id得自行修改传入
+                // 实际流量 = 下界 + 附加流量
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief 获取每条边的实际流量
+     * @return 包含各边流量的数组（按添加顺序）
+     */
+    std::vector<G> getFlow() const
+    {
+        return std::vector<G>(ans.begin() + 1, ans.end());
+    }
+
+private:
+    int n;                                              // 原始图中节点数
+    int m;                                              // 原始图中边数
+    std::vector<G> val;                                 // 节点流量平衡值（入流-出流）
+    std::vector<G> ans;                                 // 各边的实际流量
+    std::vector<std::tuple<int, int, G, G, int>> edges; // 存储所有边(u,v,下界,上界,id)
+};

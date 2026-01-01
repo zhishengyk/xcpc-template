@@ -1,0 +1,103 @@
+/**
+ * @brief 带负圈处理的最小费用流求解器
+ * @tparam G 费用流数据类型（通常为int或long long）
+ * @tparam MinCostFlow 最小费用流算法模板（需提供相同接口）
+ */
+template <typename G>
+class NegativeCycleFlow
+{
+public:
+    /**
+     * @brief 构造函数
+     * @param n 原始图中节点数（不包括超级源汇）
+     * @param s 原始源点
+     * @param t 原始汇点
+     */
+    NegativeCycleFlow(int n, int s, int t) : n(n), s(s), t(t), val(n + 1, 0) {}
+
+    /**
+     * @brief 添加有上下界和费用的边
+     * @param u 起点
+     * @param v 终点
+     * @param minFlow 最小流量（下界）
+     * @param maxFlow 最大流量（上界）
+     * @param cost 单位费用
+     */
+    void addEdge(int u, int v, G minFlow, G maxFlow, G cost)
+    {
+        if (cost < 0)
+        {
+            edges.push_back({u, v, maxFlow, maxFlow, cost});
+            edges.push_back({v, u, 0, maxFlow, -cost});
+        }
+        else
+        {
+            edges.push_back({u, v, minFlow, maxFlow, cost});
+        }
+    }
+
+    /**
+     * @brief 计算带负圈的最小费用流
+     * @return 返回{总流量, 总费用}，若无解则返回{-1, -1}
+     */
+    std::pair<G, G> compute()
+    {
+        // 初始化费用流（包含超级源汇S=0和T=n+1）
+        MinCostFlow<G> flow(n + 2);
+        const int S = 0, T = n + 1;
+
+        // 第一步：处理负费用边（强制流满上界消除负圈）
+        G totalCost = 0;
+        for (const auto &[u, v, minF, maxF, c] : edges)
+        {
+            totalCost += minF * c; // 计算强制流量的费用
+            val[u] -= minF;        // 调整节点流量平衡
+            val[v] += minF;
+            // 添加剩余容量边
+            flow.add(u, v, maxF - minF, c);
+        }
+
+        // 第二步：处理流量平衡约束
+        G totalFlow = 0;
+        for (int i = 1; i <= n; ++i)
+        {
+            if (val[i] > 0)
+            {
+                flow.add(S, i, val[i], 0);
+                totalFlow += val[i];
+            }
+            else
+            {
+                flow.add(i, T, -val[i], 0);
+            }
+        }
+
+        // 第三步：添加t->s的无限容量边（转化为循环流）
+        flow.add(t, s, std::numeric_limits<G>::max() / 2, 0);
+
+        // 第四步：检查可行性并计算初始费用
+        auto [f1, c1] = flow.work(S, T);
+        if (f1 != totalFlow)
+        {
+            return {-1, -1}; // 无可行流
+        }
+        totalCost += c1;
+
+        // 第五步：计算实际最大流
+        // 1. 获取初始可行流值（t->s边的流量）
+        G initialFlow = flow.e.back().cap;
+        flow.g[s].pop_back();
+        flow.g[t].pop_back();
+        // 2. 在残余网络上继续增广
+        auto [f2, c2] = flow.work(s, t);
+        totalCost += c2;
+
+        return {initialFlow + f2, totalCost};
+    }
+
+private:
+    int n;                                            // 原始节点数
+    int s, t;                                         // 原始源汇点
+    std::vector<G> val;                               // 节点流量平衡值
+    std::vector<std::tuple<int, int, G, G, G>> edges; // 边信息[u, v, min, max, cost]
+};

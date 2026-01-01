@@ -1,0 +1,212 @@
+using ll = long long;
+struct Result
+{
+    int size;               // 最大规模（顶点数量）
+    ll count;               // 解的总数量（所有满足最大规模的子集个数）
+    std::vector<int> nodes; // 其中一个具体解（顶点编号集合）
+};
+
+// 图求解器类：封装最大团和最大独立集的求解逻辑
+class GraphSolver
+{
+private:
+    int n;                              // 图的顶点总数（顶点编号从1开始）
+    std::vector<std::vector<bool>> adj; // 邻接矩阵：adj[u][v] = true 表示u和v之间有边
+    std::vector<int> pop;               // 预处理的位计数表：popCount[mask] = mask二进制中1的个数（快速计算子集大小）
+    std::vector<int> log2;              // 预处理的低位1位置表：log2[lowbit] = 该低位1对应的幂次+1（快速定位顶点编号）
+    const int bit = 25;                 // 最大位宽限制：确保log2表覆盖足够的掩码范围（1<<25可满足n≤50的场景）
+
+public:
+    // 构造函数：初始化顶点数量和邻接矩阵
+    // 参数n：图的顶点总数
+    GraphSolver(int n) : n(n), adj(n + 1, std::vector<bool>(n + 1, false))
+    {
+        // 1. 预处理位计数表popCount
+        // 最大掩码长度为前半部分顶点数：(n+1)/2（折半搜索的前半段）
+        int maxMask = 1 << ((n + 1) / 2);
+        pop.resize(maxMask, 0);
+        // 递推计算每个掩码的1的个数：mask的1的个数 = (mask去掉最低位1后的掩码)的1的个数 + 1
+        for (int i = 1; i < maxMask; ++i)
+        {
+            pop[i] = pop[i ^ (i & -i)] + 1;
+        }
+        // 2. 预处理log2表（定位最低位1对应的顶点）
+        log2.resize(1 << bit, 0);
+        // 对于2^i的掩码，其最低位1在第i位，对应顶点编号i+1（因顶点从1开始）
+        for (int i = 0; i < bit; ++i)
+        {
+            log2[1 << i] = i + 1;
+        }
+    }
+    void addEdge(int u, int v)
+    {
+        adj[u][v] = true; // u到v有边
+        adj[v][u] = true; // 无向图，v到u也有边
+    }
+    Result solve0() // 最大团
+    {
+        return solve(false);
+    }
+    Result solve1()
+    {
+        return solve(true);
+    }
+
+private:
+    // 核心求解函数：统一处理最大团（原图）和最大独立集（补图）
+    Result solve(bool ok)
+    {
+        std::vector<std::vector<bool>> cur; // 当前使用的邻接矩阵（原图或补图）
+        if (ok)
+        {
+            // 构建补图：补图中u和v有边 ↔ 原图中u和v无边（自身环设为true，不影响团的判断）
+            cur.resize(n + 1, std::vector<bool>(n + 1, false));
+            for (int i = 1; i <= n; ++i)
+            {
+                for (int j = 1; j <= n; ++j)
+                {
+                    if (i == j)
+                    {
+                        cur[i][j] = true; // 自身环不影响团（团要求任意两点有边，自身无需考虑）
+                    }
+                    else
+                    {
+                        cur[i][j] = !adj[i][j]; // 补图边 = 原图边取反
+                    }
+                }
+            }
+        }
+        else
+        {
+            cur = adj; // 求解最大团，直接使用原图邻接矩阵
+        }
+
+        // -------------------------- 步骤2：预处理顶点邻接掩码 --------------------------
+        int mid = n / 2;                // 折半搜索：将顶点分为前半段（1~mid）和后半段（mid+1~n）
+        std::vector<ll> mask(n + 1, 0); // mask[i]：顶点i的邻接顶点掩码（二进制位j=1表示i与j+1有边）
+        for (int i = 1; i <= n; ++i)
+        {
+            for (int j = 1; j <= n; ++j)
+            {
+                if (cur[i][j])
+                {
+                    // 将j-1位设为1（因顶点j对应二进制位j-1，从0开始计数）
+                    mask[i] |= 1LL << (j - 1);
+                }
+            }
+        }
+
+        // -------------------------- 步骤3：处理前半段顶点（动态规划预处理） --------------------------
+        int x = 1 << mid; // 前半段顶点的所有子集数（2^mid个）
+        // f[s]：前半段子集s对应的"最优团信息"
+        // first：该子集能扩展出的最大团的掩码，second：该最大团的计数
+        std::vector<std::pair<int, ll>> f(x);
+        f[0] = {0, 1}; // 空集的初始状态：最大团为空（掩码0），计数1
+        // 枚举前半段所有非空子集
+        for (int s = 1; s < x; ++s)
+        {
+            int lowbit = s & -s;   // 取子集s的最低位1（对应一个顶点）
+            int prev = s ^ lowbit; // 去掉最低位1后的子集（前一个状态）
+            int v = log2[lowbit];  // 最低位1对应的顶点编号（从1开始）
+            // 两种选择：
+            // op1：不选顶点v，直接沿用prev子集的最优团信息
+            auto op1 = f[prev];
+            // op2：选顶点v，此时需取prev与v邻接的子集（确保v与团中所有顶点有边），再加入v
+            auto op2 = f[prev & mask[v]];
+            op2.first |= lowbit; // 将v对应的位加入团掩码
+            // 选择更优的方案（优先按团大小，再按计数累加）
+            if (pop[op2.first] > pop[op1.first])
+            {
+                // op2的团更大，更新为op2
+                f[s] = op2;
+            }
+            else if (pop[op2.first] == pop[op1.first])
+            {
+                // 团大小相同，计数累加
+                f[s].first = op1.first;
+                f[s].second = op1.second + op2.second;
+            }
+            else
+            {
+                // op1的团更大，更新为op1
+                f[s] = op1;
+            }
+        }
+
+        // -------------------------- 步骤4：处理后半段顶点（筛选有效团） --------------------------
+        int y = 1 << (n - mid);            // 后半段顶点的所有子集数（2^(n-mid)个）
+        std::vector<bool> valid(y, false); // valid[s]：标记后半段子集s是否为团
+        valid[0] = true;                   // 空集是团
+        // 枚举后半段所有非空子集
+        for (int s = 1; s < y; ++s)
+        {
+            int lowbit = s & -s;        // 取子集s的最低位1
+            int prev = s ^ lowbit;      // 去掉最低位1后的子集
+            int v = log2[lowbit] + mid; // 转换为原顶点编号（后半段顶点从mid+1开始）
+            // 判断子集s是否为团：
+            // 1. 前一个状态prev是团（valid[prev]为true）
+            // 2. 新加入的顶点v与s中所有其他顶点有边（通过掩码判断：s去掉v后的部分都在v的邻接集中）
+            valid[s] = valid[prev] && ((prev & ~(mask[v] >> mid)) == 0);
+        }
+
+        // -------------------------- 步骤5：合并前后半段结果，找全局最优解 --------------------------
+        int maxSize = 0;           // 全局最大团/独立集的规模
+        ll count = 0;              // 全局最大解的总数量
+        ll bestMask = 0;           // 全局最优解的顶点掩码（二进制位i=1表示顶点i+1在解中）
+        std::vector<int> to(y, 0); // to[b]：后半段子集b对应的前半段兼容最大团的掩码
+
+        // 枚举所有有效的后半段团
+        for (int b = 0; b < y; ++b)
+        {
+            if (!valid[b])
+                continue; // 跳过非团的子集
+
+            // 计算前半段中与后半段子集b兼容的最大团掩码t：
+            // 兼容指：t中的所有顶点与b中的所有顶点都有边
+            int t;
+            if (b == 0)
+            {
+                // 后半段是空集，前半段可兼容的最大团是前半段所有顶点（掩码(1<<mid)-1）
+                t = (1 << mid) - 1;
+            }
+            else
+            {
+                int lowbit = b & -b;        // 取后半段子集b的最低位1
+                int prev = b ^ lowbit;      // 去掉最低位1后的子集
+                int v = log2[lowbit] + mid; // 转换为原顶点编号
+                // 前半段兼容掩码 = 前一个状态的兼容掩码 ∩ v的邻接掩码（确保与新加入的v兼容）
+                t = to[prev] & mask[v];
+            }
+            to[b] = t; // 记录当前后半段子集b对应的前半段兼容掩码
+            // 计算当前合并后的团规模和计数
+            int curSize = pop[f[t].first] + pop[b]; // 前半段最大团大小 + 后半段团大小
+            ll curCount = f[t].second;              // 前半段最大团的计数（后半段团只有1种）
+            // 更新全局最优解
+            if (curSize > maxSize)
+            {
+                // 找到更大的解，更新规模、计数和掩码
+                maxSize = curSize;
+                count = curCount;
+                // 合并前后半段掩码：前半段掩码直接用，后半段掩码左移mid位（对应原顶点编号）
+                bestMask = f[t].first | (ll(b) << mid);
+            }
+            else if (curSize == maxSize)
+            {
+                // 与当前最大规模相同，累加计数
+                count += curCount;
+            }
+        }
+        // -------------------------- 步骤6：从最优掩码中提取顶点编号 --------------------------
+        std::vector<int> nodes;
+        for (int i = 1; i <= n; ++i)
+        {
+            // 检查第i个顶点是否在最优掩码中（对应二进制位i-1）
+            if (bestMask & (1ULL << (i - 1)))
+            {
+                nodes.push_back(i);
+            }
+        }
+        // 返回求解结果
+        return {maxSize, count, nodes};
+    }
+};

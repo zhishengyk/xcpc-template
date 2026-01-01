@@ -1,0 +1,81 @@
+template <class T>
+class FloydMinCycle
+{
+private:
+    int n;                                           // 节点数量
+    const T INF = std::numeric_limits<T>::max() / 2; // 无穷大值
+    std::vector<std::vector<T>> dist;                // 最短距离矩阵
+    std::vector<std::vector<T>> g;                   // 原始图邻接矩阵
+    T mincycle;                                      // 最小环长度
+
+public:
+    // 构造函数，初始化节点数量
+    FloydMinCycle(int n)
+        : n(n),
+          dist(n + 1, std::vector<T>(n + 1, INF)),
+          g(n + 1, std::vector<T>(n + 1, INF)),
+          mincycle(INF)
+    {
+
+        // 初始化对角线为0
+        for (int i = 1; i <= n; ++i)
+        {
+            dist[i][i] = g[i][i] = 0;
+        }
+    }
+
+    // 添加无向边 u-v，权重为 w（自动处理重边）
+    void addEdge(int u, int v, T w)
+    {
+        g[u][v] = g[v][u] = std::min(g[u][v], w);
+        dist[u][v] = dist[v][u] = g[u][v];
+    }
+
+    // 执行 Floyd 最小环算法
+    void findMinCycle()
+    {
+        mincycle = INF;
+        for (int k = 1; k <= n; ++k)
+        {
+            // 检查以k为最大节点的环
+            for (int i = 1; i < k; ++i)
+            {
+                for (int j = i + 1; j < k; ++j)
+                {
+                    // 防止三个INF相加溢出
+                    if (dist[i][j] < INF && g[i][k] < INF && g[k][j] < INF)
+                    {
+                        mincycle = std::min(
+                            mincycle,
+                            dist[i][j] + g[i][k] + g[k][j]);
+                    }
+                }
+            }
+            // 更新最短路径
+            for (int i = 1; i <= n; ++i)
+            {
+                for (int j = 1; j <= n; ++j)
+                {
+                    if (dist[i][k] < INF && dist[k][j] < INF)
+                    {
+                        dist[i][j] = std::min(
+                            dist[i][j],
+                            dist[i][k] + dist[k][j]);
+                    }
+                }
+            }
+        }
+    }
+
+    // 获取最小环长度
+    T getMinCycleLength() const
+    {
+        return mincycle;
+    }
+
+    // 检查图中是否存在环
+    bool hasCycle() const
+    {
+        return mincycle < INF;
+    }
+};

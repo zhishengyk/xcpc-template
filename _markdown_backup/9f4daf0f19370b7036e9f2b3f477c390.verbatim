@@ -1,0 +1,68 @@
+template <class T>
+struct BellmanFord
+{
+    int n;                                           // 节点数量
+    const T INF = std::numeric_limits<T>::max() / 2; // 无穷大值
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表
+    std::vector<T> dis;                              // 最短距离
+    std::vector<int> pre;                            // 前驱节点
+
+    // 构造函数，初始化节点数量
+    BellmanFord(int n)
+        : n(n),
+          g(n + 1),
+          dis(n + 1, INF),
+          pre(n + 1, -1) {}
+
+    // 添加有向边 u->v，权重为 w
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+    }
+    // 执行 Bellman-Ford 算法
+    // 参数：起点 st，可选参数 k 表示最多经过 k 条边
+    [[nodiscard]] bool run(int st, int k = -1)
+    {
+        dis.assign(n + 1, INF);
+        pre.assign(n + 1, -1);
+        dis[st] = 0;
+
+        bool cycle = false;                        // 标记负环
+        int nums = (k == -1) ? n : k; // 迭代轮数
+
+        for (int i = 1; i <= nums; ++i)
+        {
+            bool relaxed = false;
+            auto lastDist = dis; // 保存上一轮距离，防止串联
+
+            for (int u = 1; u <= n; ++u)
+            {
+                if (lastDist[u] == INF)
+                    continue;
+                for (const auto &[v, w] : g[u])
+                {
+                    if (lastDist[u] + w < dis[v])
+                    {
+                        dis[v] = lastDist[u] + w;
+                        pre[v] = u;
+                        relaxed = true;
+                    }
+                }
+            }
+            // 如果第 n 轮仍有松弛操作，说明存在负权环
+            if (i == nums && relaxed && k == -1)
+            {
+                cycle = true;
+            }
+            // 如果本轮没有松弛操作，可以提前终止
+            if (!relaxed)
+                break;
+        }
+        return cycle;
+    }
+    // 获取最短距离数组
+    const std::vector<T> &getDistance() const
+    {
+        return dis;
+    }
+};

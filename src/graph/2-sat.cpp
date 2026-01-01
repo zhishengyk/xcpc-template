@@ -2,8 +2,7 @@ vector <int> g[N];
 int dfn[N],low[N],ins[N],idx,cnt;
 int col[N];
 stack <int> st;
-void add(int x,int y)
-{
+void add(int x,int y) {
 	g[(int)(abs(x))+n*(x<0)].push_back((int)(abs(y))+n*(y>0));
 	g[(int)(abs(y))+n*(y<0)].push_back((int)(abs(x))+n*(x>0));
     //由正负号判断是否取反。

@@ -1,0 +1,63 @@
+class TriangleCounter
+{
+private:
+    std::vector<std::vector<int>> adj;
+    int n;
+    int m;
+
+public:
+    // 构造函数：接收顶点数和边数
+    TriangleCounter(int vertices, int edges) : n(vertices), m(edges), adj(n + 1) {}
+
+    // 添加边到图中
+    void addEdge(int u, int v)
+    {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    // 计算图中三角形的数量
+    int countTriangles() const
+    {
+        int ans = 0;
+        std::vector<int> vis(n + 1, 0);
+
+        // 遍历每个顶点
+        for (int u = 1; u <= n; ++u)
+        {
+            // 第一阶段：标记满足条件的邻接点
+            for (int v : adj[u])
+            {
+                if (shouldPointTo(u, v))
+                {
+                    vis[v] = u;
+                }
+            }
+
+            // 第二阶段：查找三角形
+            for (int v : adj[u])
+            {
+                if (shouldPointTo(u, v))
+                {
+                    for (int w : adj[v])
+                    {
+                        if (shouldPointTo(v, w) && vis[w] == u)
+                        {
+                            ++ans;
+                        }
+                    }
+                }
+            }
+        }
+
+        return ans;
+    }
+
+private:
+    // 判断边的方向：度数大的点指向度数小的点，或者度数相同则编号大的点指向编号小的点
+    bool shouldPointTo(int u, int v) const
+    {
+        return adj[u].size() > adj[v].size() ||
+               (adj[u].size() == adj[v].size() && u > v);
+    }
+};

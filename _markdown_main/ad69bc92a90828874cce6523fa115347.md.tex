@@ -1,0 +1,821 @@
+\markdownRendererDocumentBegin
+\markdownRendererWarning{The `hybrid` option has been soft-deprecated.}{The `hybrid` option has been soft-deprecated.}{Consider using one of the following better options for mixing TeX and markdown: `contentBlocks`, `rawAttribute`, `texComments`, `texMathDollars`, `texMathSingleBackslash`, and `texMathDoubleBackslash`. For more information, see the user manual at <https://witiko.github.io/markdown/>.}{Consider using one of the following better options for mixing TeX and markdown: `contentBlocks`, `rawAttribute`, `texComments`, `texMathDollars`, `texMathSingleBackslash`, and `texMathDoubleBackslash`. For more information, see the user manual at <https://witiko.github.io/markdown/>.}\markdownRendererSectionBegin
+\markdownRendererSectionBegin
+\markdownRendererHeadingTwo{一些概念}\markdownRendererInterblockSeparator
+{}基图：即把有向图中的有向边改为无向边得到的图称作基图\markdownRendererParagraphSeparator
+{}弱连通：对于有向图中两点$ (u,v) $，如果我们转化为基图后$ (u,v) $联通,那么称$ (u,v) $弱联通\markdownRendererParagraphSeparator
+{}完全图:任意两点间都有一条无向边的图称作完全图，$ n $个点的完全图记作$ K_{n} $\markdownRendererParagraphSeparator
+{}子图：对于一个图$ G=(V,E) $，如果另一个图$ G^{'}=(V^{'},E^{'}) $满足$ V^{'}\subseteq V $且$ E^{'}\subseteq E $则$ G^{'} $称作$ G $的子图\markdownRendererParagraphSeparator
+{}导出子图:选定一个点集$ V $，再加上两端都在$ V $中的边，即为点集$ V $的导出子图\markdownRendererParagraphSeparator
+{}平面图:将所有点和边铺在平面上，可以满足每条边之间两两不相交的图称作平面图，对于平面图$ G=(V,E) $满足$ E \le 3V - 6 $ 且根据欧拉公式，平面图满足$ V-E+F=C+1 $其中$ F $是面的个数,$ C $是图连通块的个数\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{树上问题：}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{树的重心}\markdownRendererInterblockSeparator
+{}我们不妨设树的大小为$ n $\markdownRendererParagraphSeparator
+{}树的重心定义为，当树以重心为根时，每个子树的大小不超出$ n/2 $。\markdownRendererParagraphSeparator
+{}性质：一棵树最多只能有两个重心。\markdownRendererParagraphSeparator
+{}求重心的方法：\markdownRendererParagraphSeparator
+{}在我们求出以任意一点为根的子树大小后，我们从根开始$ dfs $。如果某个点的所有儿子的子树大小都$ \le \frac{n}{2} $，那么该点为重心，直接返回。否则我们递归子树大小超过$ n/2 $的儿子即可（显然只有一个）。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/3f117c4c8aa700278ec56a9ed7860b05.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{树的直径}\markdownRendererInterblockSeparator
+{}直径求法：\markdownRendererParagraphSeparator
+{}我们通过二次$ BFS $解决直径问题，也就是说我们先以任意点为根，找到最深的点，再次从最深的点开始二次$ BFS\markdownRendererSoftLineBreak
+{}$,得到最大深度即直径。正确性显然.\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/4e74f1bb6d3e483513adad6b0c5b76bc.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}直径的性质\markdownRendererParagraphSeparator
+{}$ 1) $树上任意一点，离它最远的一点必然是直径两端点之一\markdownRendererParagraphSeparator
+{}$ 2) $两个联通块合并，新联通块的直径两端点一定是原先的四个直径端点中的其中两个\markdownRendererParagraphSeparator
+{}$ 3) $我们可以扩展$ 2 $中的结论，我们将直径的定义扩展为点权+边权的情况下仍然成立\markdownRendererParagraphSeparator
+{}$ 4) $一棵树可以拥有多条直径，其所有直径共用一个中点，中点有可能在边上\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{树链求交}\markdownRendererInterblockSeparator
+{}我们对于一棵树的两条链$ (u,v) $和$ (x,y) $，我们考虑求出它们的交链端点\markdownRendererParagraphSeparator
+{}首先可以证明的是 最终交链的端点只可能在集合$ S $中，其中$ S $是四个点任选两个点求$ LCA $以后的点，显然这样的点最多只有$ C(4,2) $个，我们可以通过求距离的方法判断每个点是否在链上，那么同时在$ (u,v) $和$ (x,y) $上的点可以成为候选点，若候选点个数$ |S|=0 $,那么树链完全无交，若候选点个数$ |S|=1 $，那么该候选点为唯一交点，若$ |S|>=2 $，那么取这些点的直径即可。如果精细实现$ LCA $的话可以做到常数时间复杂度\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/c3781453261cf0a33e06be2d20da170d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{重链剖分}\markdownRendererInterblockSeparator
+{}重链剖分可以将树上的任意一条路径划分成不超过 $O(\log n)$ 条连续的链，每条链上的点深度互不相同。同时会给树的点重新编号为 $dfn$ 序。\markdownRendererParagraphSeparator
+{}$dfn$ 序的定义：按先遍历重儿子的顺序得到的 $dfs$ 序。\markdownRendererParagraphSeparator
+{}重链剖分的性质：\markdownRendererParagraphSeparator
+{}1：每条重链上的 $dfn$ 序连续。\markdownRendererHardLineBreak
+{}2：每个点子树内的 $dfn$ 序连续，节点 $u$ 子树内的 $dfn$ 序范围是 $[dfn[u], dfn[u] + siz[u] - 1]$。\markdownRendererHardLineBreak
+{}3：每个点到根节点的路径上，最多只会有 $O(\log n)$ 个轻儿子。\markdownRendererHardLineBreak
+{}4：每条路径能被划分为最多 $O(\log n)$ 条重链。\markdownRendererParagraphSeparator
+{}关于第三个和第四个性质的证明：每次经过轻儿子，子树大小至少会减半，因此最多下降 $O(\log n)$ 次。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/0df885d85c2cbb95227f395c81cd1f3a.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{点分治}\markdownRendererInterblockSeparator
+{}点分治的思想是统计经过根的路径的贡献，对于不经过根的路径，我们分治下去直至每个点都做为根被统计贡献。在这样的情况下，不断选择树的重心分治是最优的选择，可以证明在该条件下访问点的数量为$ nlogn $级别的。也就是说，我们通过一种特殊的遍历顺序得到了所有路径的信息。\markdownRendererParagraphSeparator
+{}特别的，如果我们存下来点分治过程中经过的节点，我们称作点分治序，每个点对应的可结合的点的点分治序都是一个连续的区间。\markdownRendererParagraphSeparator
+{}在以每个点为根统计答案时，我们考虑两种不同的方法进行求解。\markdownRendererParagraphSeparator
+{}不妨设当前根为$ u $,\markdownRendererParagraphSeparator
+{}$ 1 $对于$ u $的每一颗子树，我们挨个遍历并且和之前遍历到的子树信息进行结合统计答案。在遍历完一颗子树后要加入该子树的信息。在遍历完所有子树后，要清空信息。这样的方法能保证在统计时就不重不漏。请注意清空信息！\markdownRendererParagraphSeparator
+{}$ 2 $我们直接把所有$ u $的信息统计出来并计算答案，注意到这时候可能有单个子树之中的点结合，这部分是非法答案，我们考虑容斥减掉对应的贡献。具体的说，考虑一个函数$ calc(int\ root,int\ val) $表示以$ root $为根，当前权值为$ val $的贡献，我们要加上$ calc(u,0) $，减去所有的$ calc(v,w(u,v)) $\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/db78f850cf8e3b249c3bb9501c0c83d1.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{树上启发式合并}\markdownRendererInterblockSeparator
+{}这是一个离线做法，本质就是对于每个节点都通过$ DFS $求答案，但是通过保留重儿子的答案使复杂度降为优秀的$ nlogn $\markdownRendererParagraphSeparator
+{}具体做法是，对于以$ u $为根的子树，我们先递归其轻儿子，但是信息我们不做保留，注意这次$ dfs $并不是在求轻儿子的对$ u $结点的答案，而是递归轻儿子求其自己的答案，递归结束后回到当前节点，我们再递归其重儿子，标记重儿子并且保留信息，然后我们开始统计该节点$ u $的答案，由于重儿子的信息被保留，我们只需要计算轻儿子的贡献即可，这里实际上加上了轻儿子的贡献，统计完后在此更新该节点的答案，如果该节点$ u $不是其父节点的重儿子，还需要清除贡献,清除贡献前置重儿子为空，这样会把该节点轻重儿子的贡献全部删去，保证了正确性\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/919db26621be6e73f0a4ea5c0977251b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{基环树与基环树森林}\markdownRendererInterblockSeparator
+{}基环树又名环套树，是$ n $个点$ n $条边的无向连通图，我们看待基环树的思路往往是环和树分开，这个思想是处理基环树的关键，也就是说，基环树实际上是一个环，且环上每个点都悬挂着一颗以该点为根的子树，如果我们破环成链，那么形状将是一条长链，链上每个节点都有一颗子树(可能为空)\markdownRendererParagraphSeparator
+{}我们往往对基环树问题有两种处理方法\markdownRendererParagraphSeparator
+{}$ 1 $ 对于在基环树上贪心的问题，我们往往先在每棵小树上$ dfs $合并信息到环上，然后再对环单独处理。\markdownRendererParagraphSeparator
+{}$ 2 $对于基环树一些性质的题目，以基环树直径为例，我们往往要破环成链，分类讨论。具体的说，我们任选环上某条边记为$ (u,v) $,我们将其断开，那么剩下的结构将是一棵树，我们可以朴素的求出它的直径，这是不经过$ (u,v) $边的最大直径，然后我们考虑一定经过$ (u,v) $边的最大直径，我们不难发现，直径一定是破环后的链的一个前缀+一个后缀+该边拼凑而成，我们要先对每棵小树处理出它的最大深度$ dep $，那么$ pre[u]=max(pre[u-1],dep[u]+len[u]) $，$ len[u] $是链左边端点到该点的长度，我们求出前后缀$ max $后，遍历取最大即可\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{基环树}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/bededebcf527310de4feaeecebbb324e.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}基环树森林是一个更特殊的情况，它往往比基环树更加常见，其题目往往有特征为每个点只有唯一的入点或唯一的出点，也就是说我们可以理解为，在树上它有唯一的父亲，那么如果我们连边$ i-fa[i] $，将会得到一个基环树森林，基环树的处理手法和基环树如出一辙，无非就是对多棵树处理。\markdownRendererParagraphSeparator
+{}注意有些时候题目可能不是单纯的基环树森林，它可能是树森林和基环树森林的并集，需要分类讨论\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{基环树森林}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/fe678cf76372b108a98fed0e73c430b3.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{虚树}\markdownRendererInterblockSeparator
+{}虚树是指我们在原本树的基础上抽离出一颗新的树，虚树只由关键点以及关键点的 $LCA$ 构成，在预处理一些信息以后我们可以在虚树上求解只涉及关键点的答案。复杂度由 $O(n)$ 降为 $O(V)$，其中 $V$ 为关键点的数量。\markdownRendererParagraphSeparator
+{}构建方法：\markdownRendererParagraphSeparator
+{}因为多个点的$ LCA $可能是同一个点，为了保证复杂度我们不能多次加入。\markdownRendererParagraphSeparator
+{}我们首先将关键点集合按$ dfn $序排序，然后将相邻点的$ lca $加入点集。\markdownRendererParagraphSeparator
+{}之后再次按$ dfn $序排序并去重。然后把相邻的两个点$ (u,v) $连边$ lca(u,v)->v $\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/a7901d2d59edc27aca9f96a0cf701c79.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{树哈希}\markdownRendererInterblockSeparator
+{}树哈希主要解决树的同构问题，即快速判断两颗树的结构是否相同。\markdownRendererParagraphSeparator
+{}首先我们得有一个哈希函数 $f$，树哈希想要不被卡关键在于哈希函数的设置不能是线性函数 $ax+b$，我们可以设置成 $ax^3+b$，对于整棵树哈希值的计算，我们的公式是\markdownRendererSoftLineBreak
+{}$$\operatorname{hash}[u]=1+\sum_{v\in \operatorname{son}(u)} f(\operatorname{hash}[v]).$$\markdownRendererParagraphSeparator
+{}有了这两个前置知识，我们分有根树和无根树来讨论。\markdownRendererParagraphSeparator
+{}\markdownRendererStrongEmphasis{1 有根树。} 这种情况十分简单，我们从指定的根开始进行深度优先搜索（记为 $\mathrm{dfs}$），求出根节点的哈希值，如果两个根节点的哈希值相同，那么两棵有根树同构。\markdownRendererParagraphSeparator
+{}\markdownRendererStrongEmphasis{2 无根树。} 对于无根树的同构，我们有两种方法：\markdownRendererParagraphSeparator
+{}其一是先求出树的一个或两个重心，以重心为根做 $\mathrm{dfs}$ 求出哈希值；如果有两个重心就把两个哈希值异或起来，然后对比即可。需要注意的是，如果存在两个重心，就必须求两个重心为根的哈希值，否则会出错。\markdownRendererHardLineBreak
+{}其二是求出以每个点为根的哈希值，然后异或起来得到最终哈希值，操作方法是朴素的换根 $DP$，模板代码给出的就是换根 $DP$ 做法。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/560f9b06a7f8fea685449ca4bc38c8c6.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{快速LCA}\markdownRendererInterblockSeparator
+{}我们考虑用$ dfs $序求两个点的$ LCA $\markdownRendererParagraphSeparator
+{}结论：不妨设$ dfn[x]<dfn[y] $，那么$ lca(x,y) $是$ dfn $序上$ [dfn[x]+1,dfn[y]] $区间内深度最小的点的父亲\markdownRendererParagraphSeparator
+{}正确性显然：按$ x和y $是否有祖先关系讨论即可。\markdownRendererParagraphSeparator
+{}用返回最小位置的$ ST $表预处理可以做到$ O(1) $查询。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/91842a320f4911948fb2b632b355cc4d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{长链剖分}\markdownRendererInterblockSeparator
+{}类似于重链剖分，其区别在于重儿子的定义。在此处重儿子的定义为最大深度最深的儿子。\markdownRendererParagraphSeparator
+{}用于快速求树上$ k $级祖先，$ O(nlogn) $预处理，$ O(1) $查询。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/2c53ba9eb92e54eb00349efd2a3afcd7.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{拓扑排序}\markdownRendererInterblockSeparator
+{}拓扑排序是处理$ DAG $的算法，其本质是按顺序处理每个点，处理该点时它的所有前驱点已经处理完毕，从而保证信息不会遗漏。它有如下的性质:\markdownRendererParagraphSeparator
+{}只有$ DAG $才存在拓扑序，拓扑序是一个点的有序排列，其大小等于原图总点数。拓扑序不止一种，但在没有特殊性质下，拓扑序计数没有多项式时间解，但我们可以通过改队列为优先队列求出最大/最小拓扑序，当然也能判断图是不是$ DAG $\markdownRendererParagraphSeparator
+{}在 $DAG$ 上跑拓扑排序 $DP$，可以解决 $DAG$ 最长路、$DAG$ 路径计数、$DAG$ 点对可达情况等等。\markdownRendererParagraphSeparator
+{}对于 $DAG$ 点对可达情况我们可以用 bitset 优化，即 $f(u) \mathrel{|}= f(v)$。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/5168078d1e45a909642becc4c1209386.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{最短路}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{单源最短路}\markdownRendererInterblockSeparator
+{}首先我们最短路算法的精髓主要是松弛，松弛的定义为对于一条边$ (u,v,w) $,如果满足$ d[u]+w<d[v] $\markdownRendererParagraphSeparator
+{}我们让$ d[v]=d[u]+w $就叫松弛成功\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{BFS}\markdownRendererInterblockSeparator
+{}由于队列先进先出的特性，在边权只有$ 0/1 $时我们可以采用$ BFS $求解最短路。\markdownRendererParagraphSeparator
+{}对于边权为$ 0 $的情况，我们放到队列的头，对于边权为$ 1 $的情况，我们放到队列的尾。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{BellmanFord}\markdownRendererInterblockSeparator
+{}$ Bellmanford $是暴力的松弛算法，根据松弛的定义我们知道每个点达到最优态最多需要$ n-1 $轮，每轮松弛需要遍历所有的边松弛。特别的，如果到了第$ n $轮还能松弛成功的话，就说明有负环.\markdownRendererParagraphSeparator
+{}复杂度$ O(nm) $\markdownRendererParagraphSeparator
+{}但是根据算法流程，我们发现$ Bellmanford $算法可以计算最多经过$ k $条边的最短路，只需要松弛$ k $轮即可\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/9f4daf0f19370b7036e9f2b3f477c390.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Spfa}\markdownRendererInterblockSeparator
+{}由于 $Bellmanford$ 的复杂度不够优秀，我们引入它的优化版 $SPFA$，我们发现每轮松弛有很多没必要的状态被操作，这大大浪费了时间。\markdownRendererParagraphSeparator
+{}所以 $SPFA$ 算法在 $Bellmanford$ 的基础上采用了一个队列，队列里记录了可能会松弛成功的点，加快了算法的执行速度。同样 $SPFA$ 也能判断负环，我们用一个 $cnt$ 记录松弛次数即可。\markdownRendererParagraphSeparator
+{}作为处理负环的最短路算法，在一般的图上十分高效，但仍可以被毒瘤数据卡成 $O(nm)$ 的复杂度。尽管如此，$SPFA$ 仍然是我们在面对负数边权时最好的选择。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/d221c0661ae59668573037e38850ade9.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Dijkstra}\markdownRendererInterblockSeparator
+{}Dijkstra是我们最为常用的最短路算法之一，可以处理无负边图的最短路，常规堆优化的最短路复杂度为$ O(mlogm) $,如果我们使用$ pbds $中的斐波那契堆优化，那么复杂度将是$ O(nlogn+m) $\markdownRendererParagraphSeparator
+{}特别的，当边权只有$ 0 $和$ 1 $时,我们使用$ BFS\markdownRendererSoftLineBreak
+{}$求解最短路\markdownRendererParagraphSeparator
+{}由于$ pbds $中的配对堆不支持配模板，因此该板子没写类模板封装，需要手动改数据类型。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/e1a4e0969880a1d7dade06580f06003e.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}还能不能优化呢？如果还要追求更极致的效率，需要发掘一些性质\markdownRendererParagraphSeparator
+{}比如：如果边权总和有限/最短路不会很长，我们可以用桶配合距离实现最小堆的功能，这样可以做到$ O(n+m) $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{最短路计数}\markdownRendererInterblockSeparator
+{}我们不妨设源点为$ 1 $，我们要求源点到其他点最短路的条数，考虑$ dijkstra $的过程，我们开一个$ cnt $数组记录最短路条数,如果$ d[u]+w<d[v] $，那么$ d[u]+w $将成为新的最短路,所以我们让$ cnt[v]=cnt[u] $,而如果是$ d[u]+w=d[v] $,那么$ v $的最短路将会更多,我们让$ cnt[v]=cnt[v]+cnt[u] $\markdownRendererParagraphSeparator
+{}注意先判$ vis $,无论是大于还是等于都要入队\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{差分约束}\markdownRendererInterblockSeparator
+{}差分约束用来求解一类形如 $x_1 \le x_2 + c$ 的不等式组的可行解问题，我们通过建立有向图来解决。\markdownRendererParagraphSeparator
+{}我们把每个未知数看作图上的一个点，建立虚拟源点 $x_0$，从 $x_0$ 向每个点连一条边权为 $0$ 的有向边。\markdownRendererHardLineBreak
+{}对于一个未知数 $x$，从超级源点 $x_0$ 到它的最短路距离就是一个可行解。\markdownRendererParagraphSeparator
+{}我们接下来详细介绍如何建图，分求最大解和最小解两种情况。\markdownRendererParagraphSeparator
+{}\markdownRendererStrongEmphasis{1）求最大可行解}\markdownRendererHardLineBreak
+{}未知数 $x$ 的最大可行解为，从源点到 $x$ 的最短路 $\mathrm{dis}(x)$。\markdownRendererHardLineBreak
+{}首先我们将所有不等式转化为 $x_1 \le x_2 + C$，我们连边 $x_2 \to x_1$，边权为 $C$。\markdownRendererHardLineBreak
+{}如果不等式形如 $x_1 < x_2 + C$，我们转化为 $x_1 \le x_2 + C - 1$。\markdownRendererHardLineBreak
+{}如果不等式形如 $C \le x$，我们转化为 $x_0 \le x - C$，其中 $x_0$ 为超级源点。\markdownRendererParagraphSeparator
+{}$ 2) $求最小可行解\markdownRendererParagraphSeparator
+{}未知数$ x $的最小可行解为，从源点到$ x $的最长路$ dis(x) $\markdownRendererParagraphSeparator
+{}首先我们将所有不等式转化为$ x1+C<=x2 $ 我们连边$ x2->x1 $ 边权为$ C $\markdownRendererParagraphSeparator
+{}如果不等式形如$ x1+C<x2 $ 我们转化为$ x1+C+1<=x2 $\markdownRendererParagraphSeparator
+{}如果不等式形如$ x<=C $ 我们转化为$ x-C<=x0\markdownRendererSoftLineBreak
+{}$其中$ x0 $为超级源点\markdownRendererParagraphSeparator
+{}我们选择合适的最短路算法求解即可 如果存在负环，那么原不等式组无解（一般用SPFA）\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{分层图最短路}}\markdownRendererInterblockSeparator
+{}分层图最短路是将原本的一层图复制变成多层图帮助我们求解答案的一个$ Trick $，题目往往形如，对一个边带权图$ G=(V,E) $,要求$ S-T $的最短路，但是我们可以免费走$ K $条边，我们复制$ K $层相同的图，在层与层之间连边权为$ 0 $的边，这样就达到了免费走边的目的，如果当前在第$ i $层图，相当于走了$ i-1\markdownRendererSoftLineBreak
+{}$条免费边\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{最短路树和最短路DAG}}\markdownRendererInterblockSeparator
+{}最短路树:\markdownRendererParagraphSeparator
+{}在我们求解以$ S $为起点的单源最短路时,我们每次对一个点成功松弛时,即$ d[u]+w->d[v] $时,我们令$ fa[v]=u $,也就是说我们记录每个点的前驱,最终会形成一棵树的结构,称作最短路树.最短路树时处理变形最短路问题的关键方法.\markdownRendererParagraphSeparator
+{}最短路DAG:\markdownRendererParagraphSeparator
+{}我们求解完单源最短路径之后,假设起点为$ S $，我们建立一张新图，我们对于每条边$ u->[v,w] $,如果有$ dis[u]+w=dis[v] $,那么我们在新图上连边$ u->v $，这样我们将得到一张$ DAG $，对于这张$ DAG $的所有生成树，都是一个合法的最短路树，因此我们可以套用矩阵树定理求解最短路树数量\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{删边/带修最短路}}\markdownRendererInterblockSeparator
+{}这是一个非常经典的问题,题目形式为$ q $次询问，每次询问删去某条边$ S-T $的最短路,删除非永久化.\markdownRendererParagraphSeparator
+{}每次询问的$ S-T $相同.\markdownRendererParagraphSeparator
+{}我们用$ path(x,y) $表示最短路树上$ (x,y) $的路径，$ D $表示原最短路长度\markdownRendererParagraphSeparator
+{}我们先求出$ path(S,T) $,注意到$ path(S,T) $是一段连续的边的区间\markdownRendererParagraphSeparator
+{}如果询问删去的边不属于$ path(S,T) $，那么$ ans=D $\markdownRendererParagraphSeparator
+{}如果询问删去的边属于$ path(S,T) $,我们预处理出每条非最短路边的贡献，对于一条非最短路边$ u->[v,w] $，我们把经过这条边的最短路表示为$ dis(S,u)+w(u,v)+dis(v,T) $,不难发现$ w(u,v) $有贡献的区间是$ [L,R] $,其中$ L $为$ path(S,T) $和$ path(S,u) $第一个非重合点的位置，$ R $为$ path(T,S) $和$ path(T,v) $第一个非重合点的位置。我们可以通过最短路树上$ DP $求出所有点的$ L,R $,这里的贡献的含义是，删去这个区间的边后我可以用$ w(u,v) $代替,因此我们使用区间$ min $线段树直接维护最短路值$ dis(S,u)+w(u,v)+dis(v,T) $，每次询问单点查询即可\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/930fafde91f3cee9ec9bd9d39da7494a.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{平面图最小割}}\markdownRendererInterblockSeparator
+{}我们有如下定理:\markdownRendererParagraphSeparator
+{}对于一个平面图来说，$ S-T $的最小割等价于在其对偶图上的最短路。\markdownRendererParagraphSeparator
+{}实际上我们最大的困难在于把平面图转化为其对偶图\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{同余最短路}}\markdownRendererInterblockSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}当出现形如给定\markdownRendererInlineHtmlTag{</font>}$ n $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}个整数，求这\markdownRendererInlineHtmlTag{</font>}$ n $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}个整数能拼凑出多少个其他整数（\markdownRendererInlineHtmlTag{</font>}$ n $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}个整数可以重复取），以及给定\markdownRendererInlineHtmlTag{</font>}$ n $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}个整数，求这\markdownRendererInlineHtmlTag{</font>}$ n $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}个整数不能拼凑出的最小(最大)的整数，或者至少要拼几次才能拼出模\markdownRendererInlineHtmlTag{</font>}$ P $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}余\markdownRendererInlineHtmlTag{</font>}$ K $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">} 的数的问题时可以使用同余最短路的方法。\markdownRendererInlineHtmlTag{</font>}\markdownRendererParagraphSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}我们用例题来说明，给你\markdownRendererInlineHtmlTag{</font>}$ x,y,z $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}，请你求出\markdownRendererInlineHtmlTag{</font>}$ ax+by+cz(a,b,c>=0) $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}能构成\markdownRendererInlineHtmlTag{</font>}$ [1,h] $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}区间内多少个不同的数字?\markdownRendererInlineHtmlTag{</font>}\markdownRendererParagraphSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}我们不妨设\markdownRendererInlineHtmlTag{</font>}$ x<y<z $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}，我们考虑不使用最小数字\markdownRendererInlineHtmlTag{</font>}$ x $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}的情况下，求出该表达式\markdownRendererInlineHtmlTag{</font>}$ mod \ x=i $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}的最小数字，具体的说，假如余数为\markdownRendererInlineHtmlTag{</font>}$ i $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}的最小数为\markdownRendererInlineHtmlTag{</font>}$ d_i $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">},那么所有的\markdownRendererInlineHtmlTag{</font>}$ d_i+kx $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}都能构成。那么怎么求出最小数呢，我们可以进行的操作为\markdownRendererInlineHtmlTag{</font>}$ i->(i+y)\ modx $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}和\markdownRendererInlineHtmlTag{</font>}$ i->(i+z)\ modx $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}，不难发现这是一个有向边，边权分别为\markdownRendererInlineHtmlTag{</font>}$ y $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}和\markdownRendererInlineHtmlTag{</font>}$ z $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}，这启发我们使用最短路算法得到所有的\markdownRendererInlineHtmlTag{</font>}$ d_i $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">},那么最终答案为\markdownRendererInlineHtmlTag{</font>}$ \sum_{i=0}^{x-1}((h-d_i)/x+1) $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">},注意源点为\markdownRendererInlineHtmlTag{</font>}$ 0 $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.87);">}且\markdownRendererInlineHtmlTag{</font>}$ d[0]=0 $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{全源最短路}\markdownRendererInterblockSeparator
+{}全源最短路实际上是求出图上任意两点间的最短路。\markdownRendererParagraphSeparator
+{}我们分稠密图和稀疏图来分别考虑。\markdownRendererParagraphSeparator
+{}对于稠密图而言，$Floyd$ 算法是最好的选择，因为时间复杂度与 $m$ 无关，我们可以在 $O(n^3)$ 的时间内解决该问题。\markdownRendererParagraphSeparator
+{}对于稀疏图来说，我们有两种选择：对于没有负边的图，我们可以跑 $n$ 次 $dijkstra$ 算法来实现，复杂度 $n^2 \log n$；对于有负权的图，我们只能采用全源最短路算法 $johnson$ 算法，复杂度为 $n m \log n$。\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{Floyd}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/9bf3fcbe109dba3c6dfeedc96a08ceea.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Johnson}\markdownRendererInterblockSeparator
+{}$Johnson$ 算法实际上也是跑 $n$ 轮 $dijkstra$ 算法的做法，但我们提前处理了负边权，方法如下。\markdownRendererParagraphSeparator
+{}我们建立超级虚拟源点 $0$，向每个点连接边权为 $0$ 的有向边，然后我们跑 $SPFA$ 算法得到 $0$ 向每个点的最短路 $D(i)$，然后我们重新设定边权，对原先的边 $(u,v,w)$，我们改为 $(u,v,w+d[u]-d[v])$，可以证明这种操作可以使新的边权为非负数，然后我们利用新边权跑 $n$ 轮 $dijkstra$ 算法，最终两点之间实际的最短路为 $Dis(u,v)=dis(u,v)+d[u]-d[v]$，其中 $dis(u,v)$ 是 $dijkstra$ 的结果。\markdownRendererParagraphSeparator
+{}实现完全基于 $SPFA$ 和 $Dijkstra$ 算法，在此不给出代码。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{无向图最小环}\markdownRendererInterblockSeparator
+{}我们不难想到有朴素的$ dijkstra $算法，即对每条边$ (u,v,w) $,我求出删去该边后$ u $到$ v $的最短路$ dis(u,v) $,然后此时的最小环为$ dis(u,v)+w $，对每条边处理答案取小即可,但复杂度十分爆炸，高达$ m^2logm $\markdownRendererParagraphSeparator
+{}于是我们考虑改进$ floyd $算法，我们注意到$ floyd $算法的执行过程，当外层枚举到$ k $时，此时所有点之间的最短路只经过$ [1,k) $区间内的点。我们记$ mp\markdownRendererWarning{Undefined link reference "v"}{Undefined link reference "v"}{Look for the text `[...][v]`.}{Look for the text `[...][v]`.}[u][v] $为原始边权，$ dis\markdownRendererWarning{Undefined link reference "v"}{Undefined link reference "v"}{Look for the text `[...][v]`.}{Look for the text `[...][v]`.}[u][v] $为最短路，我们不难想到外层枚举到$ k $时，处理经过点$ k $的环路，其中$ k\markdownRendererSoftLineBreak
+{}$是最大点，于是我们双层循环枚举$ i,j $，$ i,j $分别为$ k\markdownRendererSoftLineBreak
+{}$的两个邻点，取环路长度为$ dis\markdownRendererWarning{Undefined link reference "j"}{Undefined link reference "j"}{Look for the text `[...][j]`.}{Look for the text `[...][j]`.}[i][j]+mp\markdownRendererWarning{Undefined link reference "i"}{Undefined link reference "i"}{Look for the text `[...][i]`.}{Look for the text `[...][i]`.}[k][i]+mp\markdownRendererWarning{Undefined link reference "k"}{Undefined link reference "k"}{Look for the text `[...][k]`.}{Look for the text `[...][k]`.}[j][k] $,然后正常跑剩下的$ floyd $算法\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/ba6b9bb9346e6f599ffd438b29dc122b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有向图最小平均值环}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/7dc52833994ead8a120b4e3f17cce2ca.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{多源最短路}\markdownRendererInterblockSeparator
+{}这里的多源是指有多个起点，对于非源点的节点，我们只需求出到其最近源点的距离，称为多源最短路问题\markdownRendererParagraphSeparator
+{}朴素的最短路算法在多源最短路仍然使用，以$ dijkstra $算法为例，我们只需要把初始的多个源点都设置$ d(u)=0 $,并全部$ push $到优先队列中即可，然后跑正常的$ dijkstra $算法,同理我们也有多源$ BFS $算法\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最长路}\markdownRendererInterblockSeparator
+{}我们分情况考虑，如果图是一张$ DAG $,我们在$ DAG $上拓扑排序朴素$ DP $即可，复杂度$ O(n+m) $\markdownRendererParagraphSeparator
+{}但如果是一张普通图，由于$ dijkstra $的特性只能处理最短路，我们考虑用$ SPFA\markdownRendererSoftLineBreak
+{}$来解决这个问题,操作方法很简单，只需要边权取反跑最短路即可，如果存在负环，说明最长路无穷大,复杂度最坏$ O(nm) $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{生成树}\markdownRendererInterblockSeparator
+{}生成树问题是在一个无向图$ G=(V,E) $中找到$ V-1 $条边，并且这$ V-1 $条边满足联通这$ V $个点，然后我们会得到一个树形结构称为生成树.常见问题有最小生成树，次小生成树等\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{最小生成树}\markdownRendererInterblockSeparator
+{}我们来讨论最小生成树问题，有三种主流算法$ kruskal,prim,boruvka $\markdownRendererParagraphSeparator
+{}我们仍然分稠密图和稀疏图来考虑\markdownRendererParagraphSeparator
+{}在稀疏图中，$ kruskal $拥有$ mlogm $的复杂度，相比于另外二者压倒式的好用。\markdownRendererParagraphSeparator
+{}其思想基于按边权排序，贪心的选,正确性显然\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{Kruskal}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/edd417416a6d2b80552b5bce410d8d6a.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}在稠密图中,边权$ m\markdownRendererSoftLineBreak
+{}$达到了$ O(n^2) $级别，我们就考虑使用堆优化的$ prim $算法，$ prim $算法类似于$ dijkstra $算法，我们不断从堆中取出取出当前$ dis $最小的点更新答案，并遍历这个点的出边更新其他点的$ dis $,朴素算法是$ O(n^2+m) $的，我们用$ pbds $中的配对堆做到$ O(1) $修改$ key $值，复杂度$ (nlogn+m) $ 需要注意的是这里的$ dis[u] $表示$ u $点到已经选定的点的最小距离\markdownRendererParagraphSeparator
+{}$ prim $算法的正确性显然，相当于我们从任意一点开始，不断选最小的边开枝散叶，直至结束为止.\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Prim}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/78ded6ce7fca9df7c9ceca5fa0d87991.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}我们还有第三种$ MST $算法$ boruvka $，适用于其他特殊情况，在特殊条件下也十分好用\markdownRendererParagraphSeparator
+{}其核心思想是减少联通块的个数，我们每次遍历所有边$ (u,v,w) $如果$ u $和$ v $不在同一联通块内,就用$ w $更新两个联通块之间的最小边,然后每次我们将这些边加入答案，并合并连通块。不难发现每次连通块个数减少一半,复杂度$ O(mlogn) $\markdownRendererParagraphSeparator
+{}常规题目我们一般不考虑此算法，但在某些题目中,两点间的边权由特定关系决定，如果我们能快速得到最小边，就会考虑采用$ boruvka $算法了\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Boruvka}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/0136cef3b322443e3e3fff68056695a2.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{生成树计数}\markdownRendererInterblockSeparator
+{}对于常规的生成树计数，我们可以通过矩阵树定理求解，代码模板在组合数学中的生成树计数中。\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{最小生成树计数}\markdownRendererInterblockSeparator
+{}考虑kruskal算法配合矩阵树定理，我们在对边排序以后，依次考虑每一组权值相同的边，对于这一组的边，我们知道最终连完之后的连通性是相同的,无论其顺序如何，也就是说联通块的情况是相同的，我们将这一组的所有边全部连接，对每个联通块都跑矩阵树定理，并把每个联通块得到的答案相乘，之后将每个联通块都缩成一个点，然后考虑下一组边，直至只剩一个联通块即可,正确性是显然的\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最小度限制生成树}\markdownRendererInterblockSeparator
+{}题目形如求一个图的$ MST $，但需要满足点$ Deg(S)=k $，我们不难发现这个问题具有凸完全单调性，我们可以通过朴素的$ wqs $二分在$ mlogmlogv $的时间内解决\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{曼哈顿最小生成树}\markdownRendererInterblockSeparator
+{}考虑平面上有$ n $个二维数点，定义两点间距离为曼哈顿距离$ |x1-x2|+|y1-y2| $，求最小生成树\markdownRendererParagraphSeparator
+{}通过对绝对值的拆分，最终该距离去掉绝对值符号仅有四种可能\markdownRendererParagraphSeparator
+{}$ (x1+y1)-(x2+y2) $ 或$ (x1-y1)-(x2-y2) $\markdownRendererParagraphSeparator
+{}$ (x2+y2)-(x1+y1) $或$ (x2-y2)-(x1-y1) $\markdownRendererParagraphSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.85);">}这一变形的关键意义在于：\markdownRendererInlineHtmlTag{</font>}\markdownRendererInlineHtmlTag{<font style="color:rgb(0, 0, 0) !important;">}曼哈顿距离可以表示为点在 4 个 “变换坐标系” 下的投影差值\markdownRendererInlineHtmlTag{</font>}\markdownRendererParagraphSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgb(0, 0, 0) !important;">}在每种变换坐标系中，每个点都能找到离自己最近的几个候选点作为可能的边。细节不过多阐述\markdownRendererInlineHtmlTag{</font>}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/ecda4185dc717325e5afd237a7b2659e.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最小直径生成树}\markdownRendererInterblockSeparator
+{}首先我们有结论，一个无向图的最小直径生成树即以该图的绝对中心为起点跑出的最短路树\markdownRendererParagraphSeparator
+{}因此我们首先的问题在于找到图的绝对中心（该点到图上所有点的最远距离最小）\markdownRendererParagraphSeparator
+{}问题在于图的绝对中心可能在点也可能在边上，我们需要分别讨论这两种情况\markdownRendererParagraphSeparator
+{}具体过程如下：\markdownRendererParagraphSeparator
+{}$ 1 $使用多源最短路求出任意两点间最短路\markdownRendererParagraphSeparator
+{}$ 2 $求出$ rk\markdownRendererWarning{Undefined link reference "j"}{Undefined link reference "j"}{Look for the text `[...][j]`.}{Look for the text `[...][j]`.}[i][j] $表示离$ i $点第$ j $近的点是谁\markdownRendererParagraphSeparator
+{}$ 3 $我们考虑中心在某个节点的情况，暴力遍历更新答案即可\markdownRendererParagraphSeparator
+{}$ 4 $我们考虑中心在边上的情况，我们不妨设$ ans $为直径，那么我们枚举所有的边$ w(u,v) $，如果出现$ d(v,rk(u,i))>max_{j=i+1}^{n}d(v,rk(u,j)) $,我们用$ d(u,rk(u,i))+max_{j=i+1}^{n}d(v,rk(u,j))+w $更新答案。\markdownRendererParagraphSeparator
+{}复杂度为$ O(n^3+nm+O(n^2logn)) $，具体看使用什么算法求全源最短路\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/9e47c3ad4f18c0b3baa17594b7a40c0b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{动态MST问题}\markdownRendererInterblockSeparator
+{}$ LCT $是维护动态$ MST $的利器，在原有的$ MST\markdownRendererSoftLineBreak
+{}$上，如果我们想要再加一条边$ (u,v,w) $，，我们只需要利用$ LCT $找到链$ (u,v) $中最大边权的值$ w^{'} $和位置，如果有$ w<w^{'} $,我们把原先的边断开，链接新边即可,否则跳过这条边.\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{次小生成树}\markdownRendererInterblockSeparator
+{}严格次小生成树和非严格次小生成树没有做法上的区别，都是$ LCT\markdownRendererSoftLineBreak
+{}$维护生成树的裸题，只需要把非生成树边不断尝试即可\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{kruskal重构树}\markdownRendererInterblockSeparator
+{}用于瓶颈路相关问题，可以在$ logn $时间内求出图上两点之间最大最小边权问题。但重构树并不一定只能维护边权,例如，我们可以把边出现的时间当作边权维护，从而达到维护连通性的效果，我们适当的把其他元素转化为边权能起到很好的效果.\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/a48c7a85b68829b2f5672ddfc11d3b0f.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最小斯坦纳树}\markdownRendererInterblockSeparator
+{}从某种程度上讲斯坦纳树也是生成树的一种，只不过是一个关键点集的生成树，而不是对于所有节点。\markdownRendererParagraphSeparator
+{}问题形如，给你一个无向带权图 $G=(V,E)$，并且给你 $k$ 个关键点，求一个边集 $E$ 使得这 $k$ 个关键点联通且代价最小，显然最终形态应该是一棵树，但不保证只包含这 $k$ 个节点。\markdownRendererParagraphSeparator
+{}我们利用状压 DP 解决这个问题。由于 $k$ 的数据范围为 10，我们状压关键点的状态，设 \markdownRendererCodeSpan{DP[i][S]} 为以点 \markdownRendererCodeSpan{i} 为根、联通点状态为 \markdownRendererCodeSpan{S} 的最小代价，利用最短路 + 枚举子集 DP 更新状态，复杂度 $O(3^k)$。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/36e00bd972c6f5df9d4f477720a2d5d3.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{连通性}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{有向图连通性}\markdownRendererInterblockSeparator
+{}我们只要研究强联通分量以及其应用，一个强连通分量内的点两两可达，强联通具有传递性。\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{强连通分量}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/d9e2d7f7e3f926e8ad35ff389870c3ee.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{2-Sat}\markdownRendererInterblockSeparator
+{}$ 2-Sat $问题是给定你一些二元布尔表达式，我们要求出满足所有表达式的一个解，或者报告无解。\markdownRendererParagraphSeparator
+{}需要注意的是 如果一个变量恒成立 那么我们连边$ a+n->a $\markdownRendererParagraphSeparator
+{}相对应的，如果一个变量恒不成立,我们连边 $ a->a+n $\markdownRendererParagraphSeparator
+{}如何判断无解？ 存在某个变量$ b $满足$ b $和$ b+n $在同一个$ SCC $内\markdownRendererParagraphSeparator
+{}如何输出方案？对于$ b $和$ b+n $我们取拓扑序大的为真，那么在$ SCC $中拓扑序越大的所在$ SCC $编号越小，因此输出方案为$ bel[i]<bel[i+n] $，\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{支配树}\markdownRendererInterblockSeparator
+{}$ idom[i] $为$ i $的直接支配点，在支配树上是$ i $的父节点，$ sdom[i] $是半支配点，除了辅助求支配点外无实际意义。支配树上一点的所有祖先都是该点的支配点。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/364206e3c519388b3032ebaaa29a493d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{无向图连通性}\markdownRendererInterblockSeparator
+{}我们主要研究点双连通分量和边双连通分量，前者对应割点，后者对应割边，割边又称桥\markdownRendererParagraphSeparator
+{}特别的，孤立点和孤立边的两个端点都不是割点，但孤立边是割边\markdownRendererParagraphSeparator
+{}我们有如下结论\markdownRendererParagraphSeparator
+{}$ 1 $对于$ (u,v) $两点间任意一条简单路径，其路径上的割边就是两点间的所有必经边，所以割边也可以看做必经边\markdownRendererParagraphSeparator
+{}$ 2 $对于两个点双联通分量，如果二者有公共点，那么该点一定是割点，反过来讲，该点是割点当且仅当它属于两个以上点双\markdownRendererParagraphSeparator
+{}$ 3 $边双具有传递性，但点双不具有传递性\markdownRendererParagraphSeparator
+{}$ 4 $如果两个点属于一个点双，那么这两点之间所有简单路径的并集恰好完全等于该点双\markdownRendererParagraphSeparator
+{}对于边双，我们可以通过缩点进一步刻画其连通性，但是点双的形态不适用于缩点，我们用广义圆方树刻画\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{点双连通分量}\markdownRendererInterblockSeparator
+{}在模板中我们有一个割度数组$ Cutdeg $，割度表示删去该点后增加的联通分量数。割度不为$ 0 $的点均为割点。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/f4a74a2d976b89186f52c0742fababc6.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}广义圆方树有十分多好的性质，我们单独讨论\markdownRendererParagraphSeparator
+{}$ 1 $广义圆方树上没有两个邻点形状相同\markdownRendererParagraphSeparator
+{}$ 2 $两个圆点在圆方树上的路径，以及经过的所有方点相邻圆点的集合，等于原图中两点间所有简单路径的并集\markdownRendererParagraphSeparator
+{}$ 3 $根据$ 2 $的结论，如果我们圆点赋值$ -1 $，方点赋值点双大小,那么路径权值和等于简单路径并集大小$ -2 $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{广义圆方树}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/325e68dfe3e4f43f7444a3a4101d8d7b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{边双连通分量}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/f6951259bcc2c33d07885560b7789cca.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{构造边双连通图}\markdownRendererInterblockSeparator
+{}即给你一个无向图，加最少的边使其成为边双连通图。首先我们$ EBCC $缩点，这样一定会形成一颗森林，\markdownRendererParagraphSeparator
+{}我们假如说这是一棵树的话，记叶子结点数量为$ leaf $，那么答案为$ (leaf+1)/2 $，构造方法是，我们把$ dfs $得到的叶子结点按遍历顺序放到数组中，然后不断首尾匹配即可。\markdownRendererParagraphSeparator
+{}那么如果是森林，我们考虑先把它连成一棵树使得该树的叶子数量最少，在不考虑孤立点的情况下，每棵树至少会有两个叶子，那么我们把这两个叶子找出来，把这些森林按顺序首尾链接即可，注意需要特判孤立点的情况。\markdownRendererParagraphSeparator
+{}假如有$ C $个联通块，那么这里消耗边数$ C-1 $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{欧拉图}\markdownRendererInterblockSeparator
+{}欧拉路径：经过每条边恰好一次的路径\markdownRendererParagraphSeparator
+{}欧拉回路：经过每条边恰好一次并回到起点的路径\markdownRendererParagraphSeparator
+{}欧拉图：有欧拉回路的图被称作欧拉图\markdownRendererParagraphSeparator
+{}半欧拉图：没有欧拉回路但有欧拉路径的图被称作半欧拉图\markdownRendererParagraphSeparator
+{}欧拉图判断条件：\markdownRendererParagraphSeparator
+{}对于连通图$ G $，如下三个性质等价：\markdownRendererParagraphSeparator
+{}1：$ G $是欧拉图。\markdownRendererParagraphSeparator
+{}2：对于无向图，$ G $中所有顶点的度数都是偶数；对于有向图，每个点入度等于出度。\markdownRendererParagraphSeparator
+{}3：$ G $可以被分解成若干条不共边的回路。\markdownRendererParagraphSeparator
+{}半欧拉图判断条件：\markdownRendererParagraphSeparator
+{}对于有向图：存在一个点 $s$ 使得 $\deg^{+}(s)=\deg^{-}(s)+1$，存在一个点 $t$ 使得 $\deg^{-}(t)=\deg^{+}(t)+1$，其余所有点 $v$ 满足 $\deg^{+}(v)=\deg^{-}(v)$。\markdownRendererParagraphSeparator
+{}对于无向图：恰好有两个点的度为奇数。\markdownRendererParagraphSeparator
+{}显然对于有向图和无向图，两个特殊点都是欧拉通路的两个端点。\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{无向图}\markdownRendererInterblockSeparator
+{}注意代码求出的是字典序最小的欧拉路。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/998f4c7212da53553c3a268a920da169.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{有向图}\markdownRendererInterblockSeparator
+{}注意代码求出的是字典序最小的欧拉路。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/a22f89b80781c27b9d99b540fcd37892.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{混合图}\markdownRendererInterblockSeparator
+{}混合图即既有有向边又有无向边，之所以不能转化为有向图，是因为在该问题下，无向边被视作可定向的有向边\markdownRendererParagraphSeparator
+{}判断是否有欧拉回路：\markdownRendererParagraphSeparator
+{}首先给每条无向边任意定向，设$ deg[x]=dout[x]-din[x] $\markdownRendererParagraphSeparator
+{}若存在$ deg[x]&1 $或者图不联通 直接无解\markdownRendererParagraphSeparator
+{}否则我们建立源点$ S $和汇点$ T $\markdownRendererParagraphSeparator
+{}对于一个点$ x $,如果$ deg[x]>0 $，那么$ S $向$ x $流量为$ deg[x]/2 $的边，否则$ x $向$ T $连流量为$ -deg[x]/2 $的边，对于定向的无向边$ x->y $，连边$ (x,y,1) $，跑最大流算法\markdownRendererParagraphSeparator
+{}如果与$ S $和$ T $相连的所有边均满流，那么说明有解。\markdownRendererParagraphSeparator
+{}同时该条件等价于$ maxFlow=\sum max((din-dout)/2,0) $，即最大流等于所有入度大于出度节点对应的入度减出度除以二的和\markdownRendererParagraphSeparator
+{}构造方案：\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.85);">}根据网络流的结果调整无向边的方向。将网络流中加入的定向边流量为\markdownRendererInlineHtmlTag{</font>}$ 1 $\markdownRendererInlineHtmlTag{<font style="color:rgba(0, 0, 0, 0.85);">}的边翻转\markdownRendererInlineHtmlTag{</font>}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{拉姆齐定理}\markdownRendererInterblockSeparator
+{}有$ X $个人，任意两两之间认识或不认识，我们定义$ R(n,m) $为\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">} \markdownRendererInlineHtmlTag{</font>}\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}保证“存在一个 m 人的朋友小团体（红色 \markdownRendererInlineHtmlTag{</font>}$ K_m $\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}（红色边表示朋友））”或“一个 n 人的陌生人小团体（蓝色 \markdownRendererInlineHtmlTag{</font>}$ K_n $\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}(蓝色边表示陌生)）”所需要的\markdownRendererInlineHtmlTag{</font>}\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}最小派对人数\markdownRendererInlineHtmlTag{</font>}\markdownRendererParagraphSeparator
+{}\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}朋友小团体指该团体内两两互为朋友，陌生人即该团体内两两均不认识\markdownRendererInlineHtmlTag{</font>}\markdownRendererInlineHtmlTag{<font style="color:rgb(26, 28, 30);">}。\markdownRendererInlineHtmlTag{</font>}\markdownRendererParagraphSeparator
+{}$ R(3,3)=6,R(4,4)=18 $\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{竞赛图}\markdownRendererInterblockSeparator
+{}任意两点之间有且仅有一条有向边的图为竞赛图，由于连边方式类似于任意两人都打一场单循环赛，得名竞赛图，特别的，我们一般认为有向边的起点是获胜者，因此每个点的出度为对应选手的得分。\markdownRendererParagraphSeparator
+{}得分序列：把每个点的出度拿出来升序排序后的序列。\markdownRendererParagraphSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{兰道定理}}\markdownRendererInterblockSeparator
+{}对于任意一个单调不减的序列，该序列可以为竞赛图的得分序列当且仅当：\markdownRendererParagraphSeparator
+{}$ 1 $对任意的$ i<=n $，前$ i $个得分和一定不小于$ i*(i-1)/2 $\markdownRendererParagraphSeparator
+{}$ 2 $总和必须等于$ n*(n-1)/2 $\markdownRendererParagraphSeparator
+{}若满足兰道定理，我们一定可以构造出满足条件的竞赛图。\markdownRendererParagraphSeparator
+{}构造方法：我们不妨设每个选手有一个需求值$ a[i]-b[i] $，其中$ a $是需要赢多少场，$ b $是已经赢多少场，我们每次让需求最大的选手打赢需求最小的选手即可。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{建图}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{线段树优化建图}\markdownRendererInterblockSeparator
+{}一定要注意函数参数的位置！\markdownRendererParagraphSeparator
+{}$ in $数组用于单点连多点，$ out\markdownRendererSoftLineBreak
+{}$数组用于多点连单点\markdownRendererParagraphSeparator
+{}对于多点连多点的情况，我们新开节点，然后分为多连一$ + $一连多即可\markdownRendererParagraphSeparator
+{}对于单点连单点的情况，我们直接连就可以了\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/3e5febd7d487cea334e833af2e858ec8.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{前后缀优化建图}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/5a9bee8c20bcd10656043aa077accddb.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{ST表优化建图}\markdownRendererInterblockSeparator
+{}我们考虑一种操作 即$ [a,b] $向$ [s,t] $连边，保证两区间长度相等，连法是一对一对应位置连边，我们考虑像$ ST $表一样建出$ nlogn $个区间作为并查集所有的节点，然后可以把$ merge $次数转为$ logn $个并查集节点相连，在所有$ merge $操作结束以后，由于每个区间可以拆成对应的左右子区间，把祖先节点对应的$ root $标记下传给子区间即可。\markdownRendererParagraphSeparator
+{}具体的说，我们按层考虑，对于同一层内所有$ root $相同的节点，我们按顺序把它们的左儿子$ merge $，再按顺序把他们的右儿子$ merge $即可。这样下传到最后一层，考虑并查集的连通性即可。\markdownRendererParagraphSeparator
+{}正向连正向(比如$ [1,2] $连$ [8,9] $)\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/9578fdf866cf508f5545f029317af88d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}正向连反向(比如$ [1,2] $连$ [9,8] $)\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/6f9b6ae4e1ae6d74c06c55f0f558bb4e.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{网格建图}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/b843609a184c5188d1cc7eb1a509bfae.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{网络流}\markdownRendererInterblockSeparator
+{}网络流是一种建好图以后，内置反悔机制的一种贪心策略，不需要我们人为去寻找贪心的反悔策略\markdownRendererParagraphSeparator
+{}容量:当前边最多经过的流量记作$ C(u,v\markdownRendererSoftLineBreak
+{}) $\markdownRendererParagraphSeparator
+{}流量:当前边实际经过的流量记作$ F(u,v) $\markdownRendererParagraphSeparator
+{}残量:$ C(u,v)-F(u,v) $\markdownRendererParagraphSeparator
+{}残量网络：把残量为0的边删去，剩下的图称作残量网络，对应边的边权也变为残量\markdownRendererParagraphSeparator
+{}增广路：与二分图中增广路定义不同，增广路指残量网络上源点到汇点的一条简单路径\markdownRendererParagraphSeparator
+{}割:割是一个边的集合，一个边集是割当且仅当去掉这些边后网络不在流通，即最大流为$ 0 $\markdownRendererParagraphSeparator
+{}最大流最小割定理:一个网格的最大流等于其最小割\markdownRendererParagraphSeparator
+{}我们根据定义发现，只要存在增广路，流量就能不断增大，因此求最大流是一个求增广路的过程,并且这条增广路我们遵循能流满就流满的贪心策略\markdownRendererParagraphSeparator
+{}我们选择一条增广路，假设流量为$ f\markdownRendererSoftLineBreak
+{}$,我们正向边容量$ -f $，反向边容量$ +f\markdownRendererSoftLineBreak
+{}$，这就是最开始我们说的内置反悔机制,也就是说我们可以通过反边流量进行反悔\markdownRendererParagraphSeparator
+{}由于$ EK $算法不优于$ dinic $,我们只介绍$ dinic $算法\markdownRendererParagraphSeparator
+{}$ dinic $是多路增广+当前弧优化的增广路算法\markdownRendererParagraphSeparator
+{}我们通过$ bfs $给图分层，分层后多路增广,也就是同时累加多条增广路的流量\markdownRendererParagraphSeparator
+{}当前弧优化是指，流量已经流满的边无用，我们没必要对每个点每次都从头开始遍历，而是记录一个当前弧，直接从当前弧开始遍历\markdownRendererParagraphSeparator
+{}贪心的正确性全部基于退流反边对流量不断调整直至最优状态\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{\markdownRendererStrongEmphasis{拆点}}\markdownRendererInterblockSeparator
+{}注意到在流网络中，我们对于限制都是加在边上的。那么对于点的限制我们往往考虑拆点。具体的说，我们把一个点$ U\markdownRendererSoftLineBreak
+{}$拆成对应的$ Inu $和$ Outu $，然后连边$ Inu->Outu $，边的流量限制即为该点的流量限制。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最大流}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/5b087eabab1ca85ef1ab2c20f82a1493.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{最小费用最大流}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{Dinic(dijkstra)}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/aa51bfd36f8b5604e2992793b13e385d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{Dinic(SPFA)}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/d6d62baa5f0c3f327ea855b5ba0282d6.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{EK(SPFA)}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/870522cf93402e0ce292460e82cfdd2d.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{原始对偶优化}\markdownRendererInterblockSeparator
+{}如果有负权边，在调用$ Work $时需要先跑一遍最短路算法计算势能$ h $\markdownRendererParagraphSeparator
+{}这里考虑采用$ SPFA/topoDP $\markdownRendererParagraphSeparator
+{}这里优化了最短路算法的复杂度（即通过对偶的方式让$ dijkstra $可行），但事实上不加优化的$ SPFA $极快，这里的优化可能起到负作用\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{Dinic}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/630c58629a65e07f8b1a65fe28c797a3.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{EK}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/ad09a8ac6f30f9c3e5faa87dc33e991b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{上下界网络流}\markdownRendererInterblockSeparator
+{}注意在这一模块我们区分源点汇点和超级源点汇点，前者指原本的流量网络中的源汇，后者则是新的流量网络中的源汇。为了方便表示 ，我们分别表示为$ S,T,SS,TT $\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{无源汇可行流}\markdownRendererInterblockSeparator
+{}无源汇可行流是指给你一个流量网络$ g $，每条边有上界$ C(u,v) $，也有下界$ B(u,v) $，我们要为每条边构造一个流量函数$ f(u,v) $使得该网络满足流量网络的基本特性，即流量守恒和斜对称性等等。\markdownRendererParagraphSeparator
+{}我们不妨先把$ f(u,v) $设为$ B(u,v) $,这样对于某个点它的流量差可以确定$ w_i=\sum B(u,i)-\sum B(i,u) $\markdownRendererParagraphSeparator
+{}当$ w>0 $说明流入的过多，反之则说明流出的过多。根据斜对称性我们有$ \sum W_i=0 $,我们不妨设$ \delta =\sum_{wi>0} wi=\sum_{wi<0}-wi $。这启发我们建立新的流量网络$ G $，每条边的流量上界为$ C(u,v)-B(u,v) $,\markdownRendererParagraphSeparator
+{}我们建立超级源点和汇点$ SS，TT\markdownRendererSoftLineBreak
+{}$，如果$ Wi>0 $，我们连边$ SS->(i,Wi) $,否则我们连边$ i->(TT,-Wi) $，我们跑最大流得到最大流量$ max\markdownRendererSoftLineBreak
+{}$,如果$ max==\delta $，就说明可以构造出一条可行流。\markdownRendererParagraphSeparator
+{}每条边真实的流量函数$ f(u,v)=B(u,v)+F(u,v) $,其中$ F(u,v) $指$ G $中的流量\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/1ff131f38294c6f8e3162b2d9733fe9f.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}注意代码中$ ans $数组表示每条边的可行流量\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有源汇可行流}\markdownRendererInterblockSeparator
+{}我们只需要连一条新边$ T->(S,inf) $，即可转化为无源汇可行流\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有源汇最大流}\markdownRendererInterblockSeparator
+{}首先基于一个事实：只要给定的$ f(u,v) $流函数是一组可行流，我们就一定能找到最大流。\markdownRendererParagraphSeparator
+{}我们首先考虑求出可行流，也就是执行上述过程，在这个过程中我们可以得到一组可行流函数$ f(u,v) $,并且此时已有的流量是$ T->S $的反边流量。然后我们对$ G $撤去$ SS $和$ TT $并且删掉边$ T->S $，再次从$ S->T $跑最大流。将得到的最大流和一开始的可行流相加即为答案。我们称撤去$ SS，TT，T->S $为初步调整，再次跑最大流为二次调整。\markdownRendererParagraphSeparator
+{}注意一定得按顺序来，必须先跑$ SS->TT $，然后删去$ T->S $再跑$ S->T $\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/38a0b66c8aad31e5ad51c471ed7061f0.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有源汇最小流}\markdownRendererInterblockSeparator
+{}根据结论 $ S->T $的最小流等于$ T->S $的最大流的相反数，用可行流流量减去$ G $中$ T->S\markdownRendererSoftLineBreak
+{}$的最大流\markdownRendererParagraphSeparator
+{}所以最终最小流为$ minflow(s,t)=可行流-maxflow(t,s) $\markdownRendererParagraphSeparator
+{}其中$ s \ t $为给定的源和汇\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有源汇费用流}\markdownRendererInterblockSeparator
+{}我们把最大流算法换成费用流算法，关于$ SS，TT $的所有连边代价均为$ 0 $，初始的费用为$ \sum B(u,v)W(u,v) $，然后我们要考虑撤去初步调整的影响，即加上$ SS->TT\markdownRendererSoftLineBreak
+{}$最小费用最大流产生的费用，然后二次调整也要加上$ S->T $最小费用最大流的费用。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{有负圈的费用流}\markdownRendererInterblockSeparator
+{}我们考虑让负边强制满流，也就是让$ B(u,v)=C(u,v) $,并且让$ C(v,u)=C(u,v) $表示退流，这样$ u->v $这条边就不会出现在流量网络$ G\markdownRendererSoftLineBreak
+{}$中，就可以正常跑费用流了。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/fb2d2c694e8387a9094a45261527fe8b.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{最大费用最大流}\markdownRendererInterblockSeparator
+{}我们把所有边权取反，跑（可能有负圈）的最小费用最大流即可。\markdownRendererParagraphSeparator
+{}具体的说，对于一条边$ (u,v,b,c,cost) $来说如果$ cost $为负，我们把该边拆成两条分别是$ (\markdownRendererSoftLineBreak
+{}u,v,c,c,cost) $以及$ (v,u,0,c,-cost) $,这样在加入上下界网络流图中时负边权必须流满。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{Stoer-Wagner无向图全局最小割}\markdownRendererInterblockSeparator
+{}定义无向联通图$ G $的最小割为，边权和最小的边集$ E $，满足去掉$ E $之后可以使$ G $变成两个联通分量。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/1bfec0aa058321c8866e39a6c81d872a.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{其他总结}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererSectionBegin
+\markdownRendererHeadingFive{残余网络}\markdownRendererInterblockSeparator
+{}即跑完当前流以后所有容量>0的边的集合，注意无论正反边只要有容量即可（正边可以推流，反边可以退流）。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{最小割集}\markdownRendererInterblockSeparator
+{}求最小割集的方法：在残余网络中从源点开始$ DFS $（只走容量>0的边），能到达的所有点即为$ S $,$ S $及其补集为最小割集。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{最小割集必须点}\markdownRendererInterblockSeparator
+{}残余网络中$ S $直接连向的点必在$ S $的割集中, 直接连向$ T $的点必在$ T $的割集中; 若这些点的并集为全集, 则最小割方案唯一.\markdownRendererParagraphSeparator
+{}(这里可到是指只走容量>0的边)\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{最小割可行边}\markdownRendererInterblockSeparator
+{}在残余网络中跑$ SCC $，缩点后剩余的边是可行边，这些边必然满流\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{最小割必须边}\markdownRendererInterblockSeparator
+{}仍然在残余网络中跑$ SCC $，如果一条边$ u->v $，满足$ bel[u]=bel[s] \ and\  bel[v]=bel[t] $，那么是必须边\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{最大权闭合子图}\markdownRendererInterblockSeparator
+{}即选了$ u $必须选$ u $能到达的所有点，以此类推。\markdownRendererParagraphSeparator
+{}$ S $向正权点$ x $连流量为$ a[x] $的边，负权点$ y $向$ T $连流量为$ -a[y] $的边，每条有向边加入，流量无穷大即可。\markdownRendererParagraphSeparator
+{}求最小割后，$ S $所在的最小割集即为选择方案。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFive{分组问题}\markdownRendererInterblockSeparator
+{}有$ n $个$ bool $型变量，你需要把他们分为$ 01 $两组，每个点有为$ 0 $的代价$ l_i $,有为$ 1 $的代价$ r_i $,有$ m $个特殊限制，如果$ i,j $同时在左侧会产生代价$ L_{i,j} $，同理有$ R_{i,j} $，我们考虑建立源点$ S $，汇点$ T $，$ S $向每个点连流量为$ l_i $的边，每个点向$ T $连流量为$ r_i $的边。对于左侧代价$ L_{i,j} $,我们建立一个新点$ x $，连边$ (S,x,L_{i,j}) $,$ (x,i,inf) $,$ (x,j,inf) $,对于右侧同理建新点$ x $，连边$ (x,T,R_{i,j}) $，$ (i,x,inf) $,$ (j,x,inf) $,跑最小割即可。\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{二分图}\markdownRendererInterblockSeparator
+{}二分图是无向图的概念，二分图是一类特殊的无向图.其特点是可以把点分成左右两堆，满足每堆内部的点两两不存在有边，特别的我们称为左部点和右部点\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{二分图的判断}\markdownRendererInterblockSeparator
+{}一个无向图是二分图的充要条件是不存在奇环 我们有两种方法判断二分图\markdownRendererParagraphSeparator
+{}$ 1 $我们可以通过二分图染色来判断是否为二分图,如果是二分图，染色过程中还帮我们分出了左部点和右部点，时间复杂度$ O(n+m) $\markdownRendererParagraphSeparator
+{}$ 2 $如果像线段树分治那样，需要动态判断二分图，我们可以采用扩展域并查集，对于边$ (u,v) $我们$ merge(u,v+n),merge(v,u+n) $,加边$ (u,v) $时我们先$ check\markdownRendererSoftLineBreak
+{}$$ (u,v) $是否连通，如果联通则说明有奇环，为什么呢？注意我们的连边方式，想要直接连通必须经过偶数条边，当再出现一条直接联通的边时，就存在了奇环\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图染色}\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/353b765a0f4413076d86d9791c87ba48.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}二分图匹配问题留在图匹配中统一说明\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{二分图上博弈}\markdownRendererInterblockSeparator
+{}在一张二分图上，$ Alice\markdownRendererSoftLineBreak
+{}$和$ Bob $从某个起点开始轮流移动，$ Alice $先手，不能重复移动到同一节点，无法移动者输？问必胜策略\markdownRendererParagraphSeparator
+{}结论：如果起点是最大匹配的关键点，那么$ Alice $必胜\markdownRendererParagraphSeparator
+{}证明:$ Alice $只要按匹配边不断走就可以，我们可以证明$ Bob $无法在过程中走到未盖点，假如$ Bob $走到未盖点，那我们翻转$ Alice $的起点出发的路径，匹配数不变，但此时起点不再属于匹配点，与起点是关键点矛盾。因此$ Bob\markdownRendererSoftLineBreak
+{}$只能跟随$ Alice $不断走交错路，直至无路可走\markdownRendererParagraphSeparator
+{}我们只需找到关键点即可，在二分图匹配中我们已经详细阐述了如何寻找关键点\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{删边二分图}\markdownRendererInterblockSeparator
+{}给你一个无向图问删除一条边是不是二分图？\markdownRendererParagraphSeparator
+{}我们从维护奇环的角度来考虑，没有奇环是二分图的充要条件，我们考虑对图跑出$ dfs $树，然后考虑非树边在树上构成的环路长度，我们每找到一个奇环，就对这条路径上的树边进行区间加,并标记该非树边，同理我们每找到一个偶环，也对这条路径上的树边区间加，我们用树上差分实现。十分关键的一点是，我们为什么要统计偶环呢？我们发现这种操作方式并不能找到所有的环，对于环套环的图即可发现，也就是说我们可能遗漏某些环的信息，具体的说，如果两个奇环合并又构成一个偶环，我们只会统计到一个奇环和一个偶环，我们知道只有两个奇环共用的边才是合法答案，而我们知道奇环+偶环$ =\markdownRendererSoftLineBreak
+{}$奇环，如果一条边既被奇环覆盖，又被偶环覆盖，说明他可以衍生出新的奇环，这样该边就不合法了，因为我们删去这条边需要删掉所有的奇环\markdownRendererParagraphSeparator
+{}所以我们得到统计方法:\markdownRendererParagraphSeparator
+{}对于没有奇环的图，每条边都是合法边\markdownRendererParagraphSeparator
+{}对于存在奇环的图，对于树边，如果该边被奇环覆盖的次数等于统计的奇环个数，且该边不被偶环覆盖，那么是合法边。对于非树边，当且仅当只有一个奇环，且该树边构成这个奇环时才合法\markdownRendererParagraphSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{图匹配}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{基础概念}\markdownRendererInterblockSeparator
+{}匹配：\markdownRendererParagraphSeparator
+{}对于一张图$ G=(V,E) $,我们有一个边集$ E^{'}\subseteq E $且满足$ E^{'} $中的边两两之间无公共点,那么$ E^{'} $称作该图的一个匹配。 在匹配中的边称作匹配边，否则称作非匹配边，同理我们称点为已盖点和未盖点\markdownRendererParagraphSeparator
+{}增广路:\markdownRendererParagraphSeparator
+{}两端都是未盖点的简单路径，且路径上的边满足匹配边和非匹配边交替的路径称作增广路。用边集表示类似于$ 01010 $,用点集表示即$ 0111110 $增广路的意义在于你翻转所有匹配边和非匹配边，得到的匹配边加一。\markdownRendererParagraphSeparator
+{}最大匹配：\markdownRendererParagraphSeparator
+{}在图的所有匹配中，如果一个匹配$ E^{'} $包含的元素数量是最多的，那么我们称作最大匹配，特别的，一个图不一定只有一个最大匹配\markdownRendererParagraphSeparator
+{}匹配关键点\markdownRendererParagraphSeparator
+{}在一个图的所有最大匹配中都存在的点称作匹配的关键点\markdownRendererParagraphSeparator
+{}增广路定理：\markdownRendererParagraphSeparator
+{}一个匹配是图的最大匹配当且仅当当前残图上的未盖点和非匹配边不存在增广路\markdownRendererParagraphSeparator
+{}完美匹配：\markdownRendererParagraphSeparator
+{}如果一个匹配$ E^{'} $中的边已经涵盖了图上原有的所有点，那么该匹配称作完美匹配\markdownRendererParagraphSeparator
+{}最大权匹配：\markdownRendererParagraphSeparator
+{}当我们的边存在边权时，匹配中边权和最大的匹配称作最大权匹配\markdownRendererParagraphSeparator
+{}最大权完美匹配\markdownRendererParagraphSeparator
+{}即边权和最大的完美匹配\markdownRendererParagraphSeparator
+{}最小点覆盖\markdownRendererParagraphSeparator
+{}对一个图来说，我们用最少的点覆盖所有的边，此时点的数量称作最小点覆盖\markdownRendererParagraphSeparator
+{}最小边覆盖\markdownRendererParagraphSeparator
+{}对一个图来说，我们用最少的边覆盖所有的点，此时边的数量称作最小边覆盖\markdownRendererParagraphSeparator
+{}最大独立集\markdownRendererParagraphSeparator
+{}对一个图来说，我们选出最多的点，满足这些点之间没有边直接相连，此时点的数量称作最大独立集\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{二分图上的匹配}\markdownRendererInterblockSeparator
+{}匹配在二分图中将有很好的特殊性质，因此我们把二分图和一般图分开讨论，我们用$ G(V1,V2,E) $表示二分图,$ V1 $表示左部点的集合，$ V2 $表示右部点的集合\markdownRendererParagraphSeparator
+{}特别的如果题目没有帮我们区分左部点和右部点,我们可以二分图染色得到\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图最大匹配}\markdownRendererInterblockSeparator
+{}匈牙利算法：根据增广路的概念和增广路定理，我们只需要朴素的不断寻找增广路即可，直至我们找不到增广路\markdownRendererParagraphSeparator
+{}由此诞生了匈牙利算法，匈牙利算法的原理是对每一个左部的未盖点，我去右部同样寻找一个未盖点与其配对形成增广路，这样匹配数$ +1 $，但算法过程略有不同 ，对于左部点$ V1 $，假设找到了右部点$ V2 $但$ V2 $已经匹配，我们尝试递归$ V2 $已匹配的左部点$ V3 $使其更换匹配点，如果$ V3 $能找到新匹配点$ V4 $,那么$ V3 $和$ V4 $配对，$ V1 $和$ V2 $配对。对每一个左部点都进行此操作，最终成功配对数量即最大匹配,复杂度$ O(n*E+m) $其中$ n $为左部点数量，$ E $为边的数量，$ m $为右部点数量，不难发现我们可以使点数少的点为左部来优化时间\markdownRendererParagraphSeparator
+{}在题目中，如果明确了左部点右部点，不能进行二分图染色!\markdownRendererParagraphSeparator
+{}第一个是手动二分图染色版本\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/58229c55fd9405270cbd271be93dd9f6.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}第二个是传入图和左部点集版本\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/702f8561ea3229b939d54dad1a3ade26.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}最大流做法，我们建立超级源点$ S $和超级汇点$ T $，$ S $向每一个左部点连流量为$ 1 $的边,每一个右部点向$ T $连流量为$ 1\markdownRendererParagraphSeparator
+{} $的边，二分图原有边流量置为$ 1 $，从$ S $到$ T $的最大流即最大匹配，正确性显然\markdownRendererParagraphSeparator
+{}重边并不会影响算法的正确性，因为源点汇点的流量卡死了.\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{\markdownRendererStrongEmphasis{匹配的关键点}}\markdownRendererInterblockSeparator
+{}首先我们有朴素算法，即去掉每个点后再次跑最大匹配，看匹配的大小是否改变，但是我们有更优秀的方法\markdownRendererParagraphSeparator
+{}我们给出一个引理:\markdownRendererParagraphSeparator
+{}一个匹配点$ P\markdownRendererSoftLineBreak
+{}$不是关键点，当且仅当存在一条以$ P $为端点，以匹配边出发的交替链，使得终点为某个未盖点\markdownRendererParagraphSeparator
+{}因此我们得出做法:先跑出最大匹配，然后我们从左边的每一个未盖点出发，给路径上的点打标记，然后左边未被标记的匹配点就是关键点，同理我们可以得到右边的关键点。复杂度$ O(V+E) $\markdownRendererParagraphSeparator
+{}我们也可以用最大流跑出流网络然后再使用同样的方法得到关键点。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/5fb253cb481c33f4eb5416f853812562.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}二分图最大匹配的性质\markdownRendererParagraphSeparator
+{}最大匹配$ = $最小点覆盖\markdownRendererParagraphSeparator
+{}最大匹配$ = $$ n- $最大独立集\markdownRendererParagraphSeparator
+{}最大匹配$ = $$ n- $最小边覆盖$ - $孤立点数\markdownRendererParagraphSeparator
+{}$ Hall\markdownRendererSoftLineBreak
+{}$定理:\markdownRendererParagraphSeparator
+{}对于一个二分图$ G=(V1,V2,E) $,我们设$ S $为$ V1 $的一个子集，$ F(S) $为$ S $的一个邻集，即$ S $所有相邻点的集合，总有$ |F(S)|>=|S| $,也就是说左部点的子集的邻集元素数量不小于子集的元素数量\markdownRendererParagraphSeparator
+{}$ Hall $定理加强描述：\markdownRendererParagraphSeparator
+{}更强的结论是，$ G $的最大匹配为$ |V1|-max_{S\subseteq V1}(|S|-|F(S)|) $\markdownRendererParagraphSeparator
+{}最小点覆盖的构造方法:对于左部每个未匹配点，出发走交替路，给经过的所有点打标记。那么最小点覆盖的点集为:左部所有不可达点和右部所有可达点\markdownRendererParagraphSeparator
+{}最大独立集的构造方法:即最小点覆盖的补集\markdownRendererParagraphSeparator
+{}最小边覆盖的构造方法:未匹配点随机选一条出边即可\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图最大多重匹配}\markdownRendererInterblockSeparator
+{}也即我们对$ u $点设一个变量$ h(u) $，代表$ u $点不能与超过$ h(u) $条边相连,一般的最大匹配中$ h(u)=1 $\markdownRendererParagraphSeparator
+{}我们只需要把$ S-V1 $,$ V2-T\markdownRendererSoftLineBreak
+{}$的流量改为对应的$ h(u) $跑最大流即可\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图带权最大匹配}\markdownRendererInterblockSeparator
+{}对于最大权或者最小权最大匹配，我们改最大流为最大费用最大流或最小费用最大流\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图最大权完美匹配}\markdownRendererInterblockSeparator
+{}我们用$ KM $算法在$ O(n^3) $的时间复杂度内解决该问题\markdownRendererParagraphSeparator
+{}我们默认左部右部点数量相等，否则将是最大权匹配\markdownRendererParagraphSeparator
+{}需要注意的是，如果题目存在负边权，那么不存在的边视作负无穷大，否则视作$ 0 $\markdownRendererParagraphSeparator
+{}首先我们为每个点赋一个权值$ h(u) $称作顶标,要求对于所有的边$ (u,v,w) $，都满足$ h(u)+h(v)>=w $\markdownRendererParagraphSeparator
+{}然后我们引出相等子图的概念，相等子图即只包含满足$ h(u)+h(v)=w $的边的子图\markdownRendererParagraphSeparator
+{}然后我们有定理：如果相等子图存在完美匹配，那么该匹配为最大权完美匹配\markdownRendererParagraphSeparator
+{}所以求解最大权完美匹配的过程实际上是一个不断调整顶标的过程\markdownRendererParagraphSeparator
+{}我们初始化左部点顶标为对应出边最大值，右部点顶标为0\markdownRendererParagraphSeparator
+{}我们先给出类似匈牙利算法的朴素思想，每次搜索假设我们左部点为$ u $，我们遍历其所有出边，如果右部点$ v $已被访问则跳过，否则检测该边是否在相等子图中，如果在子图中未被匹配或者递归可以更换匹配点的话（和匈牙利类似）,我们返回增广成功的信息.如果不在子图中，我们更新右部点的$ slack $值\markdownRendererParagraphSeparator
+{}然后取$ d $为所有未访问右部点的最小$ slack $值，访问过的左部点顶标减去$ d $,右部点加上$ d\markdownRendererSoftLineBreak
+{}$,对每个点进行此循环直至成功为止，最终的所有顶标和即为最大权,$ match $数组即为匹配情况，用$ dfs $实现复杂度$ O(n^4) $\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/6be0db8b753f4c012d86a3b9366383ce.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}我们考虑继续优化，发现调整顶标后重新搜索十分浪费时间,我们考虑改$ dfs $为$ bfs $,具体的说就是利用了交错树遗留的信息优化了复杂度，时间复杂度为$ O(n^3) $,实际上$ bfs $的过程并不好理解，卡$ dfs $的题目也并不多\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/28c85336e55883702e6c8f7baf8dd47c.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingFour{二分图最大权匹配}\markdownRendererInterblockSeparator
+{}我们只需要将点数少的一边补足点，并且补满边权为$ 0 $或者负无穷大的边，即可跑$ KM\markdownRendererSoftLineBreak
+{}$算法求最大权完美匹配\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{一般图最大匹配}\markdownRendererInterblockSeparator
+{}在最大匹配的基础上，代码求出了匹配必需点（可能用于一般图上博弈）。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/03e0a6dc3b9096faccd528330df04b98.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{环计数问题}\markdownRendererInterblockSeparator
+{}\markdownRendererSectionBegin
+\markdownRendererHeadingThree{无向图三元环计数}\markdownRendererInterblockSeparator
+{}首先给所有边定向。我们规定从度数小的点指向度数大的点，度数相同就从编号小的点指向编号大的点。那么此时此图是一张有向无环图。\markdownRendererParagraphSeparator
+{}然后我们枚举所有的点 $u$ 和 $u$ 的出点 $v$，再枚举 $v$ 的出点 $w$，检查 $w$ 和 $u$ 是否联通即可。\markdownRendererParagraphSeparator
+{}可以证明复杂度为 $O(m\sqrt m)$。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/ac19a35d9d1b50e9def4cc4314fe7625.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingThree{无向图四元环计数}\markdownRendererInterblockSeparator
+{}类似地，四元环就是指四个点 $a,b,c,d$ 满足 $(a,b)(b,c)(c,d)(d,a)$ 均有边连接。\markdownRendererParagraphSeparator
+{}考虑先对点进行排序。度数小的排在前面，度数大的排在后面。\markdownRendererParagraphSeparator
+{}考虑枚举排在最后面的点 $a$，此时只需要对于每个比 $a$ 排名更前的点 $c$，都求出有多少个排名比 $a$ 前的点 $b$ 满足 $(a,b)(c,b)$ 有边。然后只需要这些中任取两个都能成为一个四元环。求 $b$ 的数量只需要遍历一遍 $b$ 和 $c$ 即可。\markdownRendererParagraphSeparator
+{}注意到我们枚举的复杂度本质上与枚举三元环等价，所以时间复杂度相同。\markdownRendererParagraphSeparator
+{}值得注意的是，$(a,b,c,d)$ 和 $(a,c,b,d)$ 可以是两个不同的四元环。\markdownRendererParagraphSeparator
+{}另外，度数相同的结点的排名将不相同，并且需要注意判断 $a \ne c$。\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/1070fd55295cfe9ade74429d87adc671.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererSectionBegin
+\markdownRendererHeadingTwo{最大团与最大独立集}\markdownRendererInterblockSeparator
+{}考虑到最大独立集是补图的最大团，因此我们只需要考虑怎么求最大团。\markdownRendererParagraphSeparator
+{}我们考虑求最大团并计数\markdownRendererParagraphSeparator
+{}$ Solution1 $折半搜索\markdownRendererParagraphSeparator
+{}我们考虑折半搜索，对前半部分，我们求出每个子集$ S $对应的最大团，以及对应的数量。这个操作可以使用高维前缀和完成，复杂度为$ O(2^{n/2}*{n/2}) $,但我们发现我们可以考虑线性递推，具体的说，我们每次拿出$ S $对应最低的位，考虑该位对应的点选不选即可。因此复杂度降为$ O(2^{n/2}) $。对后半部分，我们只考虑判断每个子集是否为团，然后找出和前半部分的兼容掩码，更新答案即可，最终复杂度$ O(2^{n/2}) $\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/fbb0bc72c6e8d638957b0e1655d38977.verbatim}{cpp}{cpp}\markdownRendererInterblockSeparator
+{}$ Solution2 $ 启发式搜索\markdownRendererParagraphSeparator
+{}我们考虑每次找到最大的度数$ max\markdownRendererSoftLineBreak
+{}$,如果$ max<=2 $，说明是环或者链，可以通过预处理好的$ f $和$ g $解决，否则我们选择度数最大的点递归搜索。\markdownRendererParagraphSeparator
+{}复杂度可以证明，上限为$ O({1.38}^{n}) $，实际运行速度极快\markdownRendererInterblockSeparator
+{}\markdownRendererInputFencedCode{./_markdown_main/4971101e113ea4dc741878b33cd6709c.verbatim}{cpp}{cpp}
+\markdownRendererSectionEnd 
+\markdownRendererSectionEnd \markdownRendererDocumentEnd

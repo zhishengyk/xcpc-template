@@ -1,0 +1,115 @@
+class EdgeBC
+{
+    // 输入的无向图的邻接表（引用，避免拷贝）
+    const std::vector<std::vector<int>> &e;
+    
+    // Tarjan算法用的栈
+    std::vector<int> stk; // stack
+    int tt = 0;           // 栈顶指针
+    int cur = 0;          // 全局时间戳，用于dfn和low的标记
+
+    // Tarjan算法求边双连通分量（EBCC）
+    void dfs(int x, int fa)
+    {
+        // 初始化当前节点的dfn和low值为当前时间戳
+        dfn[x] = low[x] = ++cur;
+        // 将当前节点压入栈
+        stk[++tt] = x;
+
+        // 遍历所有邻接节点
+        for (int y : e[x])
+        {
+            // 跳过父节点（处理无向图的重复边）
+            if (y == fa)
+            {
+                fa = ~fa; // 特殊处理，确保每条边只处理一次
+                continue;
+            }
+            
+            // 如果邻接节点y未被访问过
+            if (!dfn[y])
+            {
+                dfs(y, x); // 递归访问y
+                low[x] = std::min(low[x], low[y]); // 更新low值
+            }
+            else
+            {
+                // y已被访问，更新low值
+                low[x] = std::min(low[x], dfn[y]);
+            }
+        }
+
+        // 如果dfn[x] == low[x]，说明x是一个边双连通分量的根
+        if (dfn[x] == low[x])
+        {
+            int y;
+            cntBlock += 1; // 边双连通分量计数
+            // 弹出栈中元素，直到x被弹出，这些元素构成一个边双连通分量
+            do
+            {
+                y = stk[tt--];
+                ebcc[cntBlock].push_back(y); // 将y加入当前边双连通分量
+                bel[y] = cntBlock;           // 记录y所属的边双连通分量编号
+            } while (y != x);
+        }
+    }
+
+public:
+    // 原始图的属性
+    std::vector<int> dfn;  // 访问时间戳（DFS序）
+    std::vector<int> low;   // 通过回边能到达的最小dfn值
+    std::vector<int> bel;   // 每个节点所属的边双连通分量编号
+    std::vector<std::vector<int>> ebcc; // 存储每个边双连通分量的节点列表
+
+    // 缩点后的图（边双连通分量构成的树/森林）
+    std::vector<std::vector<int>> g; // 缩点后的邻接表
+    std::vector<int> siz;           // 每个边双连通分量的大小
+    std::vector<int> val;           // 每个边双连通分量的权值（可选）
+    int cntBlock = 0;               // 边双连通分量的总数
+
+    // 构造函数：输入无向图的邻接表e（节点编号从1开始）
+    EdgeBC(const std::vector<std::vector<int>> &e) : 
+        e(e),                       // 初始化图的引用
+        dfn(e.size()),              // 初始化dfn数组
+        low(e.size()),              // 初始化low数组
+        bel(e.size()),              // 初始化bel数组
+        stk(e.size()),              // 初始化栈
+        ebcc(e.size())              // 初始化ebcc数组
+    {
+        int n = e.size() - 1; // 节点数（假设节点编号为1~n）
+
+        // 遍历所有节点，对未访问的节点调用Tarjan算法
+        for (int i = 1; i <= n; i++)
+        {
+            if (!dfn[i])
+            {
+                dfs(i, -1); // 从i开始DFS，初始父节点为-1
+            }
+        }
+
+        // 调整ebcc的大小为实际边双连通分量的数量
+        ebcc.resize(cntBlock + 1);
+        
+        // 初始化缩点后的图
+        g.resize(cntBlock + 1);
+        siz.resize(cntBlock + 1);
+        // val.resize(cntBlock + 1); // 如果需要权值，可以取消注释
+
+        // 遍历所有节点，构建缩点后的图
+        for (int x = 1; x <= n; x++)
+        {
+            siz[bel[x]]++; // 统计每个边双连通分量的大小
+            // val[bel[x]] += a[x]; // 如果需要权值，可以累加
+
+            // 遍历x的邻接节点y
+            for (int y : e[x])
+            {
+                // 如果x和y属于不同的边双连通分量，则在缩点后的图中添加边
+                if (bel[x] != bel[y])
+                {
+                    g[bel[x]].push_back(bel[y]);
+                }
+            }
+        }
+    }
+};

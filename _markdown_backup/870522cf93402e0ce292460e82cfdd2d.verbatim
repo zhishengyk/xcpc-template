@@ -1,0 +1,153 @@
+template <class T>
+struct MinCostFlow
+{
+    // ====== 内部边结构：存储邻接表索引指向的真实边 ======
+    struct _Edge
+    {
+        int to;     // 终点
+        T cap;      // 残量容量
+        T cost;     // 单位费用
+        _Edge(int to_, T cap_, T cost_) : to(to_), cap(cap_), cost(cost_) {}
+    };
+
+    int n = 0;                                  // 点数（默认按 1..n 使用）
+    std::vector<_Edge> e;                       // 边表（正反向成对存储）
+    std::vector<std::vector<int>> g;            // 邻接表：存储边表下标
+    std::vector<T> dis;                         // 最短费用距离
+    std::vector<int> pre;                       // 记录最短路上边的编号（边表下标）
+
+    MinCostFlow() {}
+    MinCostFlow(int n_) { init(n_); }
+
+    // ====== 初始化 ======
+    void init(int n_)
+    {
+        n = n_;
+        e.clear();
+        g.assign(n + 1, {});
+    }
+
+    // ====== 加边：自动加反向边 ======
+    void add(int u, int v, T cap, T cost)
+    {
+        g[u].push_back((int)e.size());
+        e.emplace_back(v, cap, cost);
+        g[v].push_back((int)e.size());
+        e.emplace_back(u, 0, -cost);
+    }
+
+    // ====== SPFA：在残量网络上找费用最短增广路（可含负边费用） ======
+    bool spfa(int s, int t)
+    {
+        const T INF = std::numeric_limits<T>::max() / 4;
+        dis.assign(n + 1, INF);
+        pre.assign(n + 1, -1);
+        std::vector<bool> inq(n + 1, false);
+
+        std::queue<int> q;
+        dis[s] = 0;
+        q.push(s);
+        inq[s] = true;
+
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inq[u] = false;
+
+            for (int idx : g[u])
+            {
+                const _Edge &ed = e[idx];
+                if (ed.cap <= 0) continue;
+                int v = ed.to;
+                T nd = dis[u] + ed.cost;
+                if (nd < dis[v])
+                {
+                    dis[v] = nd;
+                    pre[v] = idx;
+                    if (!inq[v])
+                    {
+                        q.push(v);
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+        return dis[t] != INF;
+    }
+
+    // ====== 主过程：不断用 SPFA 找最短费用增广路，直至无法增广 ======
+    std::pair<T, T> work(int s, int t)
+    {
+        T flow = 0;     // 总流量
+        T cost = 0;     // 总费用
+        const T INF = std::numeric_limits<T>::max() / 4;
+
+        while (spfa(s, t))
+        {
+            // 计算本次可增广的流量
+            T aug = INF;
+            for (int v = t; v != s; v = e[pre[v] ^ 1].to)
+            {
+                aug = std::min(aug, e[pre[v]].cap);
+            }
+
+            // 沿最短路增广
+            for (int v = t; v != s; v = e[pre[v] ^ 1].to)
+            {
+                e[pre[v]].cap -= aug;
+                e[pre[v] ^ 1].cap += aug;
+            }
+
+            flow += aug;
+            cost += aug * dis[t];  // dis[t] 为本次单位费用
+        }
+
+        return std::make_pair(flow, cost);
+    }
+
+    // ====== 对外可视边结构（便于调试/打印） ======
+    struct Edge
+    {
+        int from;   // 起点
+        int to;     // 终点
+        T cap;      // 原始容量
+        T cost;     // 单位费用
+        T flow;     // 已经流过的流量
+    };
+
+    // 返回所有原始边的信息（以正向边为准）
+    std::vector<Edge> edges()
+    {
+        std::vector<Edge> a;
+        a.reserve(e.size() / 2);
+        for (int i = 0; i < (int)e.size(); i += 2)
+        {
+            Edge x;
+            x.from = e[i ^ 1].to;
+            x.to   = e[i].to;
+            // 正反向残量之和等于原始容量
+            x.cap  = e[i].cap + e[i ^ 1].cap;
+            x.cost = e[i].cost;
+            // 反向边的容量就是已流过的流量
+            x.flow = e[i ^ 1].cap;
+            a.push_back(x);
+        }
+        return a;
+    }
+
+    // 打印所有有流量的边
+    void printFlowEdges()
+    {
+        std::cout << "Flow edges (from -> to: flow / cost):" << std::endl;
+        auto all = edges();
+        for (const auto &ed : all)
+        {
+            if (ed.flow > 0)
+            {
+                std::cout << ed.from << " -> " << ed.to << ": "
+                          << ed.flow << " / " << ed.cost << std::endl;
+            }
+        }
+    }
+};

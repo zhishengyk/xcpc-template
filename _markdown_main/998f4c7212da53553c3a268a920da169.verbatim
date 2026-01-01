@@ -1,0 +1,103 @@
+class UndirectedEulerRoad
+{
+
+public:
+    UndirectedEulerRoad(int _n) : n(_n), g(_n + 1)
+    {
+        cnt.assign(n + 1, 0);
+        deg.assign(n + 1, 0);
+        revTot.assign(n + 1, 0);
+    }
+
+    void addEdge(int u, int v)
+    {
+        if (u != v)
+        {
+            g[u].push_back({v, 1, 0});
+            g[v].push_back({u, 1, 0});
+        }
+        else
+        {
+            g[u].push_back({v, 1, 0});
+        }
+        deg[v]++;
+        deg[u]++;
+    }
+    void hierholzer(int x)
+    {
+
+        for (int &i = cnt[x]; i < g[x].size();)
+        {
+            auto &e = g[x][i];
+            if (e.exist)
+            {
+                e.exist = false;
+                if (e.v != x)
+                {
+                    g[e.v][e.revCnt].exist = false;
+                }
+                ++i;
+                hierholzer(e.v);
+            }
+            else
+                ++i;
+        }
+        road.push_back(x);
+    }
+    int work()
+    {
+        for (int i = 1; i <= n; ++i)
+        {
+            std::sort(begin(g[i]), end(g[i]));
+        }
+        for (int i = 1; i <= n; ++i)
+        {
+            for (int j = 0; j < g[i].size(); ++j)
+            {
+                g[i][j].revCnt = revTot[g[i][j].v]++;
+            }
+        }
+        int start = 0;
+        int tot = 0;
+        for (int i = n; i >= 1; --i)
+        {
+            tot += (deg[i] & 1);
+            if (deg[i] & 1)
+            {
+                start = i;
+            }
+            else if (deg[i] and deg[start] {
+                start = i;
+            }
+        }
+        if (tot != 2 and tot != 0)
+        {
+            return 0;
+        }
+        hierholzer(start);
+        return (tot ? 1 : 2);
+    }
+    auto getRoad()
+    {
+        std::reverse(begin(road), end(road));
+        return road;
+    }
+
+private:
+    struct Edge
+    {
+        int v;      // 到达的点是谁
+        bool exist; // 该边是否被用过
+        int revCnt; // 反边在对应vector中的编号
+        bool operator<(const Edge &e) const
+        {
+            return v < e.v;
+        }
+    };
+    int n;
+    std::vector<std::vector<Edge>> g; // 存图
+    std::vector<int> cnt;             // 遍历到哪条边了
+    std::vector<int> deg;
+    std::vector<int> road;
+    std::vector<int> revTot;
+};

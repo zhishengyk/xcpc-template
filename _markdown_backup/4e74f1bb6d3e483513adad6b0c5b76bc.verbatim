@@ -1,0 +1,52 @@
+
+template <class T>
+struct TreeDiameter
+{
+    int n;
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表（无向图）
+    std::vector<int> fa;                             // 父节点记录（用于路径回溯）
+
+    TreeDiameter(int n) : n(n), g(n + 1), fa(n + 1) {}
+
+    // 添加无向边 u-v
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    // BFS 求最远节点（返回节点编号）
+    std::pair<int, T> bfs(int start)
+    {
+        std::vector<T> dep(n + 1, -1);
+        std::queue<int> q;
+        q.push(start);
+        dep[start] = 0;
+        fa[start] = -1;
+
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            for (auto [v, w] : g[u])
+            {
+                if (dep[v] == -1)
+                {
+                    dep[v] = dep[u] + w;
+                    fa[v] = u;
+                    q.push(v);
+                }
+            }
+        }
+        int maxPos = std::max_element(dep.begin(), dep.end()) - dep.begin();
+        return std::make_pair(maxPos, dep[maxPos]);
+    }
+
+    // 求树的直径（返回直径长度和端点 {u, v}）
+    std::pair<T, std::pair<int, int>> getDiameter()
+    {
+        auto [x, dis1] = bfs(1); // 第一次BFS
+        auto [y, dis2] = bfs(x); // 第二次BFS
+        return {dis2, {x, y}};
+    }
+};

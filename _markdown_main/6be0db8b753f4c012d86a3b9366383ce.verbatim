@@ -1,0 +1,126 @@
+template <class T>
+class KuhnMunkres
+{
+private:
+    const T low = std::numeric_limits<T>::min() / 2;
+    const T high = std::numeric_limits<T>::max() / 2;
+    int n;                             // 顶点数量
+    std::vector<std::vector<T>> graph; // 邻接矩阵表示的带权二分图
+    std::vector<T> A;                  // 左部顶点的顶标
+    std::vector<T> B;                  // 右部顶点的顶标
+    std::vector<int> match;            // 匹配结果，match[v] = u表示右部点v匹配左部点u
+    std::vector<T> slack;              // 松弛量数组
+    std::vector<int> vis;
+    // 访问标记数组
+
+    /**
+     * @brief DFS寻找增广路
+     * @param u 当前尝试匹配的左部顶点
+     * @return 是否找到增广路
+     */
+    bool dfs(int u)
+    {
+        for (int v = 1; v <= n; ++v)
+        {
+            if (vis[v])
+                continue; // 右部顶点已访问过
+
+            if (A[u] + B[v] == graph[u][v])
+            { // 满足相等子图条件
+                vis[v] = true;
+                if (!match[v] || dfs(match[v]))
+                {                 // 如果v未匹配或可以找到增广路
+                    match[v] = u; // 更新匹配
+                    return true;
+                }
+            }
+            else
+            {
+                // 更新松弛量
+                slack[v] = std::min(slack[v], A[u] + B[v] - graph[u][v]);
+            }
+        }
+        return false;
+    }
+
+public:
+    /**
+     * @brief 构造函数，初始化KM算法
+     * @param n 顶点数量
+     * @param edges 边的三元组(u, v, w)列表
+     */
+    KuhnMunkres(int n, const std::vector<std::tuple<int, int, int>> &edges)
+        : n(n), graph(n + 1, std::vector<T>(n + 1, low)),
+          A(n + 1, low), B(n + 1, 0),
+          match(n + 1, 0), slack(n + 1, high), vis(n + 1, 0)
+    {
+
+        // 初始化邻接矩阵
+        for (const auto &[u, v, w] : edges)
+        {
+            graph[u][v] = w;
+        }
+
+        // 初始化左部顶标为出边最大权值
+        for (int u = 1; u <= n; ++u)
+        {
+            for (int v = 1; v <= n; ++v)
+            {
+                A[u] = std::max(A[u], graph[u][v]);
+            }
+        }
+    }
+
+    /**
+     * @brief 计算最大权完美匹配
+     * @return 匹配结果和总权重
+     */
+    std::pair<std::vector<int>, T> solve()
+    {
+        for (int u = 1; u <= n; ++u)
+        { // 为每个左部顶点寻找匹配
+            while (true)
+            {
+                // 每次尝试前重置访问标记和松弛量
+                std::fill(vis.begin(), vis.end(), 0);
+                std::fill(slack.begin(), slack.end(), high);
+
+                if (dfs(u))
+                    break; // 找到增广路则退出
+
+                // 计算最小的松弛量d
+                T d = high;
+                for (int v = 1; v <= n; ++v)
+                {
+                    if (!vis[v])
+                    {
+                        d = std::min(d, slack[v]);
+                    }
+                }
+
+                // 调整顶标
+                for (int v = 1; v <= n; ++v)
+                {
+                    if (vis[v])
+                    { // 在增广路中的右部顶点
+                        B[v] += d;
+                        A[match[v]] -= d;
+                    }
+                }
+                A[u] -= d; // 调整当前左部顶点的顶标
+            }
+        }
+
+        // 计算总权重
+        T totalWeight = 0;
+        for (int v = 1; v <= n; ++v)
+        {
+            if (match[v] > 0)
+            {
+                totalWeight += graph[match[v]][v];
+            }
+        }
+
+        return {match, totalWeight};
+    }
+};

@@ -1,0 +1,97 @@
+template <class T>
+class Floyd
+{
+private:
+    int n;                                           // 节点数量
+    const T INF = std::numeric_limits<T>::max() / 2; // 防止加法溢出
+    std::vector<std::vector<T>> dp;                  // 距离矩阵
+    std::vector<std::vector<int>> next;              // 路径重建矩阵
+
+public:
+    // 构造函数，初始化节点数量
+    Floyd(int n)
+        : n(n),
+          dp(n + 1, std::vector<T>(n + 1, INF)),
+          next(n + 1, std::vector<int>(n + 1, -1))
+    {
+
+        // 初始化对角线为0
+        for (int i = 1; i <= n; ++i)
+        {
+            dp[i][i] = 0;
+            next[i][i] = i;
+        }
+    }
+
+    // 添加无向边 u-v，权重为 w（自动处理重边）
+    void addEdge(int u, int v, T w)
+    {
+        dp[u][v] = std::min(dp[u][v], w);
+        dp[v][u] = std::min(dp[v][u], w);
+        next[u][v] = v;
+        next[v][u] = u;
+    }
+
+    // 执行 Floyd-Warshall 算法
+    void run()
+    {
+        for (int k = 1; k <= n; ++k)
+        {
+            for (int i = 1; i <= n; ++i)
+            {
+                for (int j = 1; j <= n; ++j)
+                {
+                    if (dp[i][k] + dp[k][j] < dp[i][j])
+                    {
+                        dp[i][j] = dp[i][k] + dp[k][j];
+                        next[i][j] = next[i][k];
+                    }
+                }
+            }
+        }
+    }
+
+    // 获取距离矩阵
+    const std::vector<std::vector<T>> &getDistanceMatrix() const
+    {
+        return dp;
+    }
+
+    // 获取两点间的最短距离
+    T getDistance(int u, int v) const
+    {
+        return dp[u][v];
+    }
+
+    // 获取两点间的最短路径
+    std::vector<int> getPath(int u, int v) const
+    {
+        std::vector<int> path;
+
+        // 不可达情况
+        if (next[u][v] == -1)
+        {
+            return path;
+        }
+        path.push_back(u);
+        while (u != v)
+        {
+            u = next[u][v];
+            path.push_back(u);
+        }
+        return path;
+    }
+
+    // 检查图中是否存在负权环
+    bool hasNegativeCycle() const
+    {
+        for (int i = 1; i <= n; ++i)
+        {
+            if (dp[i][i] < 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+};

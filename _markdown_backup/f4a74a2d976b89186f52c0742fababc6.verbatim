@@ -1,0 +1,82 @@
+// 用于计算图的顶点双连通分量和割点（关节点）的类
+class VertexBC
+{
+    // 图的邻接表引用（const引用避免拷贝）
+    const std::vector<std::vector<int>> &adj;
+    // DFS时间戳计数器，用于记录访问顺序
+    int cur = 0;
+
+    // DFS遍历函数，用于发现割点
+    // x: 当前遍历的顶点
+    // root: 当前连通分量的根节点
+    void dfs(int x, int root)
+    {
+        // 初始化当前顶点的发现时间和low值
+        dfn[x] = low[x] = cur++;
+
+        // 记录在DFS树中的子节点数量
+        int sonNum = 0;
+
+        // 遍历所有邻接顶点
+        for (int y : adj[x])
+        {
+            if (dfn[y] == -1) // 如果邻接顶点未被访问过
+            {
+                sonNum++;     // 增加子节点计数
+                dfs(y, root); // 递归访问
+                // 回溯时更新low值
+                low[x] = std::min(low[x], low[y]);
+
+                // 割点判定条件：
+                // 1. 子节点的low值 >= 当前节点的dfn值
+                // 2. 当前节点不是根节点
+                if (low[y] >= dfn[x] && x != root)
+                {
+                    cutDeg[x] += 1; // 增加当前节点的割点度数
+                }
+            }
+            else // 如果邻接顶点已被访问过（可能是回边）
+            {
+                // 通过回边更新low值
+                low[x] = std::min(low[x], dfn[y]);
+            }
+        }
+
+        // 特殊处理根节点的情况
+        if (x == root)
+        {
+            // 根节点的割点度数 = 子树数量 - 1
+            cutDeg[x] = std::max(sonNum - 1, 0);
+        }
+    }
+
+public:
+    // 存储每个顶点的发现时间（DFS序）
+    std::vector<int> dfn;
+    // 存储每个顶点的low值（能回溯到的最早祖先）
+    std::vector<int> low;
+    // 存储每个顶点作为割点时的度数（删除后会增加的连通分量数）
+    std::vector<int> cutDeg;
+    // 记录图的连通分量数量
+    int componentNum = 0;
+
+    // 构造函数，接收邻接表并计算割点信息
+    VertexBC(const std::vector<std::vector<int>> &adj)
+        : adj(adj),            // 初始化邻接表引用
+          dfn(adj.size(), -1), // 初始化dfn数组（-1表示未访问）
+          low(adj.size()),     // 初始化low数组
+          cutDeg(adj.size())   // 初始化割点度数数组
+    {
+        int n = adj.size();
+
+        // 遍历所有顶点（从1开始，假设顶点编号为1~n-1）
+        for (int i = 1; i < n; i++)
+        {
+            if (dfn[i] == -1) // 遇到未访问的顶点
+            {
+                componentNum++; // 增加连通分量计数
+                dfs(i, i);      // 从该顶点开始DFS
+            }
+        }
+    }
+};

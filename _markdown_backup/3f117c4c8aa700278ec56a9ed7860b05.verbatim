@@ -1,0 +1,46 @@
+struct TreeCentroid
+{
+    int n;
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表
+    std::vector<int> siz;                            // 子树大小
+
+    TreeCentroid(int n) : n(n), g(n + 1), siz(n + 1) {}
+
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    void dfsSize(int u, int fa)
+    {
+        siz[u] = 1;
+        for (const auto &[v, w] : g[u])
+        {
+            if (v != fa)
+            {
+                dfsSize(v, u);
+                siz[u] += siz[v];
+            }
+        }
+    }
+
+    int findCentroid(int u)
+    {
+        dfsSize(u, 0);
+        return getRoot(u, 0, siz[u]);
+    }
+
+private:
+    int getRoot(int u, int fa, int total_size)
+    {
+        for (const auto &[v, w] : g[u])
+        {
+            if (v != fa && 2 * siz[v] > total_size)
+            {
+                return getRoot(v, u, total_size);
+            }
+        }
+        return u;
+    }
+};

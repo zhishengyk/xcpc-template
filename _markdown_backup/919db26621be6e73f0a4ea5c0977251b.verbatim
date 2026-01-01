@@ -1,0 +1,118 @@
+
+// 对于以u为根的子树
+// 1先统计其轻儿树的答案 统计完后删除信息
+// 2再统计其重子树的答案 统计完后保留信息
+// 3将重子树的信息合并到u上
+// 4再遍历u的轻子树 把轻子树的信息合并到u上
+// 5判断u的信息是否需要传给父节点（如果u是其父节点的重儿子就需要传递信息）
+
+// 以求子树颜色种类为例
+template <class T>
+struct DSUOnTree
+{
+    int n;
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表
+    std::vector<int> siz, son;
+    std::vector<T> ans; // 子树大小、重儿子,每个节点的答案
+    int root;
+    int heavyNode = 0;              // 当前处理的重儿子节点
+
+
+    int typeCnt = 0;                // 颜色种类数量
+    std::vector<int> col, colorCnt; // 原始颜色数组  颜色出现次数数组
+
+    DSUOnTree(std::vector<std::vector<std::pair<int, int>>> &g, std::vector<int> &col, int root) : n(g.size() - 1), g(g), siz(n + 1), son(n + 1), ans(n + 1), root(root), col(col), colorCnt(n + 1, 0) {}
+    // 预处理重儿子
+    void preProcess(int u, int f)
+    {
+        siz[u] = 1;
+        for (auto [v, w] : g[u])
+        {
+            if (v != f)
+            {
+                preProcess(v, u);
+                siz[u] += siz[v];
+                if (siz[son[u]] < siz[v])
+                {
+                    son[u] = v;
+                }
+            }
+        }
+    }
+
+    // 添加/删除节点信息（需根据题目实现）
+    void update(int u, int f, int val)
+    {
+        // 示例：统计子树颜色种类数
+        if (val == 1)
+        {
+            colorCnt[col[u]]++;
+            typeCnt += (colorCnt[col[u]] == 1);
+        }
+        else
+        {
+            colorCnt[col[u]]--;
+            typeCnt -= (colorCnt[col[u]] == 0);
+        }
+    }
+
+    // 遍历子树统计/清除信息
+    void traverse(int u, int f, int val)
+    {
+        update(u, f, val);
+        for (auto [v, w] : g[u])
+        {
+            if (v != f && v != heavyNode)
+            {
+                traverse(v, u, val);
+            }
+        }
+    }
+
+    // 主算法
+    void solve(int u, int f, bool keep)
+    {
+        // 1. 先处理轻儿子（不保留信息）
+        for (auto [v, w] : g[u])
+        {
+            if (v != f && v != son[u])
+            {
+                solve(v, u, false);
+            }
+        }
+
+        // 2. 处理重儿子（保留信息）
+        if (son[u])
+        {
+            solve(son[u], u, true);
+            heavyNode = son[u];
+        }
+
+        // 3. 再次遍历轻儿子并合并信息
+        for (auto [v, w] : g[u])
+        {
+            if (v != f && v != son[u])
+            {
+                traverse(v, u, 1);
+            }
+        }
+        update(u, f, 1); // 添加当前节点信息
+        // 4. 此处可保存当前节点的答案
+        ans[u] = typeCnt;
+
+        heavyNode = 0;
+
+        // 5. 如果需要清除信息
+        if (!keep)
+        {
+            traverse(u, f, -1);
+            typeCnt = 0;
+        }
+    }
+    // 对外接口
+    void compute()
+    {
+        preProcess(root, 0); // 假设根节点是1
+        solve(root, 0, true);
+    }
+};

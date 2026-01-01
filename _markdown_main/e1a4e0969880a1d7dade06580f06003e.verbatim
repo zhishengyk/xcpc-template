@@ -1,0 +1,70 @@
+struct Dijkstra
+{
+    using Edge = std::pair<int, int>; // first: 目标节点, second: 边权重
+
+    // 自定义比较函数，按距离排序
+    struct Compare
+    {
+        bool operator()(const Edge &a, const Edge &b) const
+        {
+            return a.second > b.second; // 小根堆
+        }
+    };
+
+    // 使用配对堆（最接近斐波那契堆的实现）
+    using Heap = __gnu_pbds::priority_queue<
+        Edge,
+        Compare,
+        __gnu_pbds::pairing_heap_tag>;
+
+    std::vector<int> dis;
+    const int INF = std::numeric_limits<int>::max() / 2;
+    int n;
+
+    // 初始化
+    Dijkstra(int n) : n(n), dis(n + 1) {}
+
+    // 执行Dijkstra算法
+    void run(int S, const std::vector<std::vector<Edge>> &g)
+    {
+        dis.assign(n + 1, INF);
+        std::vector<bool> vis(n + 1, false);
+        std::vector<Heap::point_iterator> handles(n + 1);
+        Heap pq;
+
+        dis[S] = 0;
+        handles[S] = pq.push({S, 0});
+
+        while (!pq.empty())
+        {
+            auto [u, d] = pq.top();
+            pq.pop();
+
+            if (vis[u])
+                continue;
+            vis[u] = true;
+
+            for (const auto &[v, w] : g[u])
+            {
+                if (!vis[v] && dis[v] > dis[u] + w)
+                {
+                    dis[v] = dis[u] + w;
+                    if (handles[v] != nullptr)
+                    {
+                        pq.modify(handles[v], {v, dis[v]});
+                    }
+                    else
+                    {
+                        handles[v] = pq.push({v, dis[v]});
+                    }
+                }
+            }
+        }
+    }
+
+    // 获取结果
+    const std::vector<int> &getDistance() const
+    {
+        return dis;
+    }
+};

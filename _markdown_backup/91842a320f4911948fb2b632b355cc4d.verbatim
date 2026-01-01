@@ -1,0 +1,32 @@
+template <class T>
+class FastLCA
+{
+    int n;
+    std::vector<std::vector<std::pair<int, int>>> g;
+    TreePre<T> pre;
+    ST<T> *st;
+
+public:
+    FastLCA(std::vector<std::vector<std::pair<int, int>>> &g, int root) : n(g.size() - 1), g(g), pre(g, root)
+    {
+        std::vector<int> reLabel(n + 1);
+        for (int i = 1; i <= n; ++i)
+        {
+            reLabel[pre.dfn[i]] = pre.dep[i];
+        }
+        st = new ST(reLabel);
+    }
+    int getLca(int u, int v)
+    {
+        if (u == v)
+        {
+            return u;
+        }
+        u = pre.dfn[u], v = pre.dfn[v];
+        if (u > v)
+        {
+            std::swap(u, v);
+        }
+        return pre.fa[pre.idfn[(*st)(u + 1, v)]];
+    }
+};

@@ -1,0 +1,74 @@
+struct BuildEdge
+{
+    int n;
+    int tot;
+    std::vector<std::vector<std::pair<int, int>>> g;
+    BuildEdge(int n) : n(n), g(5 * n + 1), tot(5 * n)
+    {
+        for (int i = 2; i <= n; ++i)
+        {
+            g[n + i].emplace_back(n + i - 1, 0);         // 连前缀
+            g[2 * n + i - 1].emplace_back(2 * n + i, 0); // 连后缀
+            g[3 * n + i].emplace_back(3 * n + i - 1, 0);
+            g[4 * n + i - 1].emplace_back(4 * n + i, 0);
+        }
+        for (int i = 1; i <= n; ++i)
+        {
+            g[n + i].emplace_back(i, 0);
+            g[2 * n + i].emplace_back(i, 0);
+            g[i].emplace_back(3 * n + i, 0);
+            g[i].emplace_back(4 * n + i, 0);
+        }
+    }
+    void norm(int tot)
+    {
+        if (g.size() <= tot)
+        {
+            g.resize(tot + 1);
+        }
+    }
+    void linkPre(int x, int y, int w) // x->[1,y]
+    {
+        g[x].emplace_back(n + y, w);
+    }
+    void linkSuf(int x, int y, int w) // x->[y,n]
+    {
+        g[x].emplace_back(2 * n + y, w);
+    }
+    void preLink(int x, int y, int w) //[1,x]->y
+    {
+        g[3 * n + x].emplace_back(y, w);
+    }
+    void sufLink(int x, int y, int w) //[x,n]->y
+    {
+        g[4 * n + x].emplace_back(y, w);
+    }
+    void preToPre(int x, int y, int w) //[1,x]->[1,y]
+    {
+        ++tot;
+        norm(tot);
+        preLink(x, tot, w);
+        linkPre(tot, y, 0);
+    }
+    void preToSuf(int x, int y, int w) //[1,x]->[y,n]
+    {
+        ++tot;
+        norm(tot);
+        preLink(x, tot, w);
+        linkSuf(tot, y, 0);
+    }
+    void sufToPre(int x, int y, int w) //[x,n]->[1,y]
+    {
+        ++tot;
+        norm(tot);
+        sufLink(tot, x, w);
+        linkPre(tot, y, 0);
+    }
+    void sufToSuf(int x, int y, int w) //[x,n]->[y,n]
+    {
+        ++tot;
+        norm(tot);
+        sufLink(x, tot, w);
+        linkSuf(tot, y, 0);
+    }
+};

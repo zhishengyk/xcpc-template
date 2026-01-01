@@ -1,0 +1,81 @@
+struct Hungary
+{
+    int n;
+    const std::vector<std::vector<int>> &g;
+    std::vector<int> left, right, col;
+    bool isBigraph;
+    int maxMatch;
+    std::vector<int> vis, match; // match记每个右部点匹配的左部点是谁
+    int cnt = 0;
+    void dfs1(int u) // 二分图染色
+    {
+        for (auto v : g[u])
+        {
+            if (col[v] == -1)
+            {
+                col[v] = col[u] ^ 1;
+                if (col[v] == 1)
+                {
+                    right.push_back(v);
+                }
+                else
+                {
+                    left.push_back(v);
+                }
+                dfs1(v);
+            }
+            else if (col[u] == col[v])
+            {
+                isBigraph = false;
+                return;
+            }
+        }
+    }
+    bool dfs2(int u, int num) // 找增广路
+    {
+        for (auto v : g[u])
+        {
+            if (vis[v] == num)
+            {
+                continue;
+            }
+            vis[v] = num;
+            if (!match[v] or dfs2(match[v], num))
+            {
+                match[v] = u;
+                return true;
+            }
+        }
+        return false;
+    }
+    Hungary(const std::vector<std::vector<int>> &g) : g(g), n(g.size() - 1), vis(n + 1), match(n + 1)
+    {
+        isBigraph = 1;
+        maxMatch = 0;
+        col.assign(n + 1, -1);
+        for (int i = 1; i <= n; ++i)
+        {
+            if (col[i] == -1)
+            {
+                col[i] = 0;
+                left.push_back(i);
+                dfs1(i);
+            }
+        }
+        if (isBigraph)
+        {
+            if (left.size() > right.size())
+            {
+                std::swap(left, right);
+            }
+            for (auto i : left)
+            {
+                ++cnt; // 时间戳优化
+                if (dfs2(i, cnt))
+                {
+                    ++maxMatch;
+                }
+            }
+        }
+    }
+};

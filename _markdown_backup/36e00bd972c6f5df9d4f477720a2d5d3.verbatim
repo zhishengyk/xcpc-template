@@ -1,0 +1,167 @@
+/**
+ * @class SteinerTreeSolver
+ * @brief 求解无向图中连接指定关键点的最小斯坦纳树问题
+ *
+ * @details
+ * 使用动态规划结合SPFA松弛的方法求解最小斯坦纳树问题
+ * - 节点编号从1开始
+ * - 关键点存储在数组中下标从0开始
+ * - 时间复杂度: O(n * 3^k + m * 2^k * log n)
+ */
+template <class T>
+class SteinerTreeSolver
+{
+public:
+    using Edge = std::tuple<int, int, int>; // (u, v, weight)
+    const T inf = std::numeric_limits<T>::max() / 2;
+    /**
+     * @brief 构造函数
+     * @param n 图中节点总数
+     * @param e 图的边集合
+     * @param key 关键点列表(下标从0开始)
+     */
+    SteinerTreeSolver(int n,
+                      const std::vector<Edge> &e,
+                      const std::vector<int> &key)
+        : n(n),
+          k(key.size()),
+          key(key)
+    {
+
+        // 构建邻接表
+        BuildGraph(e);
+        // 初始化DP数组
+        InitializeDP();
+    }
+
+    /**
+     * @brief 计算最小斯坦纳树的权值和
+     * @return 连接所有关键点的最小边权值和
+     * @throws std::runtime_error 如果没有可行解
+     */
+    T ComputeMinSteinerTree()
+    {
+        // 动态规划处理所有状态
+        for (int state = 0; state < (1 << k); ++state)
+        {
+            // 处理子集合并
+            ProcessSubsetUnions(state);
+            // 使用SPFA松弛当前状态
+            RelaxWithSPFA(state);
+        }
+
+        // 在所有关键点都连通的状态中寻找最小值
+        int fullMask = (1 << k) - 1;
+        T minCost = inf;
+        for (int u = 1; u <= n; ++u)
+        {
+            if (dp[u][fullMask] < minCost)
+            {
+                minCost = dp[u][fullMask];
+            }
+        }
+        return minCost;
+    }
+
+private:
+    int n;                                           // 节点总数
+    int k;                                           // 关键点数量
+    std::vector<int> key;                            // 关键点列表
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表
+    std::vector<std::vector<T>> dp;                  // DP数组
+    std::queue<int> q;                               // SPFA使用的队列
+    std::vector<bool> inq;                           // SPFA标记数组
+
+    /**
+     * @brief 构建图的邻接表表示
+     * @param e 图的边集合
+     */
+    void BuildGraph(const std::vector<Edge> &e)
+    {
+        g.resize(n + 1); // 节点编号从1开始
+
+        for (const auto &[u, v, w] : e)
+        {
+            g[u].emplace_back(v, w);
+            g[v].emplace_back(u, w); // 无向图
+        }
+    }
+
+    /**
+     * @brief 初始化DP数组
+     */
+    void InitializeDP()
+    {
+        // dp[i][s] 表示以i为根，连通状态为s的最小权值
+        dp.resize(n + 1, std::vector<T>(1 << k, inf));
+
+        // 初始化每个关键点单独连通的情况
+        for (int i = 0; i < k; ++i)
+        {
+            dp[key[i]][1 << i] = 0;
+        }
+
+        // 初始化SPFA相关数据结构
+        inq.resize(n + 1, false);
+    }
+
+    /**
+     * @brief 处理状态子集的合并
+     * @param state 当前状态掩码
+     */
+    void ProcessSubsetUnions(int state)
+    {
+        for (int u = 1; u <= n; ++u)
+        {
+            // 枚举state的所有非空子集subset
+            for (int subset = state; subset > 0; subset = (subset - 1) & state)
+            {
+                // 避免整数溢出
+                if (dp[u][subset] < inf &&
+                    dp[u][state ^ subset] < inf)
+                {
+                    T newCost = dp[u][subset] + dp[u][state ^ subset];
+                    if (newCost < dp[u][state])
+                    {
+                        dp[u][state] = newCost;
+                    }
+                }
+            }
+
+            // 如果当前节点的状态被更新，加入队列准备SPFA松弛
+            if (dp[u][state] < inf)
+            {
+                q.push(u);
+                inq[u] = true;
+            }
+        }
+    }
+
+    /**
+     * @brief 使用SPFA算法松弛当前状态
+     * @param state 当前状态掩码
+     */
+    void RelaxWithSPFA(int state)
+    {
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inq[u] = false;
+
+            for (const auto &[v, weight] : g[u])
+            {
+                if (dp[u][state] < inf &&
+                    dp[u][state] + weight < dp[v][state])
+                {
+                    dp[v][state] = dp[u][state] + weight;
+                    if (!inq[v])
+                    {
+                        q.push(v);
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+    }
+};

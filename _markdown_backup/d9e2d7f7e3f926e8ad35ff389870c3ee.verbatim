@@ -1,0 +1,96 @@
+class SCC
+{
+    const std::vector<std::vector<int>> &e; // 图的邻接表引用（输入图）
+    std::vector<int> stk;                   // Tarjan算法使用的栈
+    int tt = 0;                             // 栈顶指针
+    int idx = 0;                            // 时间戳计数器
+
+    // Tarjan算法的DFS核心实现
+    void dfs(int x)
+    {
+        dfn[x] = low[x] = ++idx; // 初始化当前节点的dfn和low值
+        stk[++tt] = x;           // 节点入栈
+
+        // 遍历所有邻接节点
+        for (int y : e[x])
+        {
+            if (!dfn[y]) // 未访问过的节点
+            {
+                dfs(y);                            // 递归搜索
+                low[x] = std::min(low[x], low[y]); // 更新low值
+            }
+            else if (!bel[y]) // 已访问但未确定SCC的节点（在栈中）
+            {
+                low[x] = std::min(low[x], dfn[y]); // 更新low值
+            }
+        }
+
+        // 发现SCC的根节点
+        if (dfn[x] == low[x])
+        {
+            cntBlock += 1; // SCC计数器增加
+            int y;
+            do
+            {
+                y = stk[tt--];            // 弹出栈顶节点
+                p[cntBlock].push_back(y); // 将节点加入当前SCC
+                bel[y] = cntBlock;        // 标记节点所属SCC编号
+            } while (y != x); // 直到处理到当前根节点
+        }
+    }
+
+public:
+    // 原始图的访问信息
+    std::vector<int> dfn; // DFS访问序号（时间戳）
+    std::vector<int> low; // 能回溯到的最早节点的时间戳
+    std::vector<int> bel; // 节点所属的SCC编号
+
+    // SCC相关数据
+    std::vector<std::vector<int>> p; // 每个SCC包含的节点列表
+    std::vector<std::vector<int>> g; // 缩点后的DAG图（邻接表）
+    std::vector<int> din;            // 缩点后各节点的入度
+    std::vector<int> siz;            // 各SCC的大小（节点数）
+    int cntBlock = 0;                // SCC总数计数器
+
+    // 构造函数：输入图的邻接表
+    SCC(const std::vector<std::vector<int>> &e)
+        : e(e),          // 初始化图引用
+          dfn(e.size()), // 分配dfn数组空间
+          low(e.size()), // 分配low数组空间
+          bel(e.size()), // 分配bel数组空间
+          p(e.size())    // 分配SCC节点列表空间
+    {
+        int n = e.size() - 1; // 节点数（假设节点从1开始编号）
+        stk.assign(n + 1, 0); // 初始化栈
+
+        // 对每个未访问节点执行Tarjan算法
+        for (int i = 1; i <= n; i++)
+        {
+            if (!dfn[i]) // 未访问过的节点
+            {
+                dfs(i); // 开始DFS
+            }
+        }
+
+        // 构建缩点后的DAG图
+        g.resize(cntBlock + 1);   // 调整缩点图大小
+        din.resize(cntBlock + 1); // 调整入度数组大小
+        siz.resize(cntBlock + 1); // 调整SCC大小数组
+
+        // 遍历原始图构建缩点图
+        for (int x = 1; x <= n; x++)
+        {
+            siz[bel[x]]++;     // 统计各SCC大小
+            for (int y : e[x]) // 遍历邻接节点
+            {
+                if (bel[x] == bel[y]) // 同一SCC内部边跳过
+                {
+                    continue;
+                }
+                g[bel[x]].push_back(bel[y]); // 添加缩点后的边
+                din[bel[y]]++;               // 更新目标SCC的入度
+            }
+        }
+    }
+};
+// 如果belong[u]<belong[v]且u v联通 那么缩点以后边的方向是v->u

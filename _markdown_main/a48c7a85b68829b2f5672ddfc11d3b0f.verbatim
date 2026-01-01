@@ -1,0 +1,121 @@
+class KruskalTree
+{
+private:
+    DSU dsu;
+    std::vector<int> lc, rc, val;
+    int idx;
+    std::vector<std::vector<int>> fa;
+    std::vector<int> dep;
+    int lg;
+
+public:
+    // 构造函数，初始化并构建重构树
+    KruskalTree(const std::vector<std::array<int, 3>> &g, int n)
+        : lc(2 * n + 1),
+          rc(2 * n + 1),
+          val(2 * n + 1),
+          idx(n),
+          dsu(2 * n),
+          dep(2 * n + 1)
+    {
+
+        // 计算二进制提升的最大层数
+        lg = std::__lg(2 * n + 1);
+        fa.assign(2 * n + 1, std::vector<int>(lg + 1, 0));
+
+        // 按边权从大到小排序
+        auto e = g;
+        std::sort(e.begin(), e.end(),
+                  [](const auto &a, const auto &b)
+                  { return a[2] < b[2]; });
+
+        // 构建Kruskal重构树
+        for (const auto &[u, v, w] : e)
+        {
+            if (dsu.root(u) != dsu.root(v))
+            {
+                ++idx;
+                int rootU = dsu.root(u);
+                int rootV = dsu.root(v);
+                lc[idx] = rootU;
+                rc[idx] = rootV;
+                dsu.pre[rootU] = idx;
+                dsu.pre[rootV] = idx;
+                val[idx] = w;
+            }
+            if (idx == 2 * n - 1)
+            {
+                break;
+            }
+        }
+
+        // DFS预处理二进制提升表
+        auto dfs = [&](auto &&self, int u, int parent) -> void
+        {
+            fa[u][0] = parent;
+            for (int i = 1; i <= lg; ++i)
+            {
+                fa[u][i] = fa[fa[u][i - 1]][i - 1];
+            }
+            if (lc[u])
+            {
+                dep[lc[u]] = dep[u] + 1;
+                self(self, lc[u], u);
+            }
+            if (rc[u])
+            {
+                dep[rc[u]] = dep[u] + 1;
+                self(self, rc[u], u);
+            }
+        };
+
+        // 从根节点开始DFS
+        for (int i = idx; i >= 1; --i)
+        {
+            if (!dep[i])
+            {
+                dep[i] = 1;
+                dfs(dfs, i, 0);
+            }
+        }
+    }
+
+    // 查询两个节点的最近公共祖先
+    int getLca(int u, int v) const
+    {
+        if (dep[u] < dep[v])
+        {
+            std::swap(u, v);
+        }
+        // 提升u到与v相同深度
+        for (int i = lg; i >= 0; --i)
+        {
+            if (dep[fa[u][i]] >= dep[v])
+            {
+                u = fa[u][i];
+            }
+        }
+        if (u == v)
+        {
+            return u;
+        }
+        // 同时提升u和v
+        for (int i = lg; i >= 0; --i)
+        {
+            if (fa[u][i] != fa[v][i])
+            {
+                u = fa[u][i];
+                v = fa[v][i];
+            }
+        }
+        return fa[u][0];
+    }
+    int getVal(int x)
+    {
+        return val[x];
+    }
+    bool isConnected(int u, int v)
+    {
+        return dsu.root(u) == dsu.root(v);
+    }
+};

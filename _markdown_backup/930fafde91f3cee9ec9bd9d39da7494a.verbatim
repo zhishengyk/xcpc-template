@@ -1,0 +1,113 @@
+
+template <class G>
+class EdgeDeleteShortestPath
+{
+public:
+    SegmentTree<G> *Tree;//区间min线段树
+    const G inf = std::numeric_limits<G>::max() / 2;//上限
+    std::map<std::pair<int, int>, int> mp;
+    std::vector<G> disS, disT;//S为起点的dis数组  T为起点的dis数组
+    std::vector<int> preS, preT;//
+    G before;//before表示最开始的最短路
+    EdgeDeleteShortestPath(int S, int T, std::vector<std::vector<std::pair<int, G>>> &g)
+    {
+        int n = g.size() - 1;
+        Dijkstra dijk(n);
+        dijk.run(S, g);
+        before = dijk.dis[T];
+        preS = dijk.getPre();
+        disS = dijk.getDistance();
+        dijk.run(T, g);
+        preT = dijk.getPre();
+        disT = dijk.getDistance();
+        std::vector<int> path; // 从s->t
+        int now = S;
+        while (now != -1)
+        {
+            path.push_back(now);
+            now = preT[now];
+            if (path.size() >= 2)
+            {
+                mp[{path[path.size() - 2], path.back()}] = path.size() - 1;
+                mp[{path.back(), path[path.size() - 2]}] = path.size() - 1; // 记录路径是第几条边
+            }
+        }
+        std::vector<std::vector<int>> treeS(n + 1), treeT(n + 1); // 最短路树
+        for (int i = 1; i <= n; ++i)
+        {
+            if (preS[i] != -1)
+            {
+                treeS[preS[i]].push_back(i);
+            }
+            if (preT[i] != -1)
+            {
+                treeT[preT[i]].push_back(i);
+            }
+        }
+        int PathSum = path.size() - 1;
+
+        std::vector<int> dpS(n + 1, 0), dpT(n + 1, 0);
+        auto dfsS = [&](auto dfsS, int u) -> void
+        {
+            for (auto v : treeS[u])
+            {
+                if (mp.contains(std::make_pair(u, v))) // 说明还在干线上
+                {
+                    dpS[v] = mp[{std::make_pair(u, v)}] + 1;
+                    dfsS(dfsS, v);
+                }
+                else
+                {
+                    dpS[v] = dpS[u];
+                    dfsS(dfsS, v);
+                }
+            }
+        };
+        dpS[S] = 1;
+        dfsS(dfsS, S);
+        auto dfsT = [&](auto dfsT, int u) -> void
+        {
+            for (auto v : treeT[u])
+            {
+                if (mp.contains(std::make_pair(u, v))) // 说明还在干线上
+                {
+                    dpT[v] = mp[{std::make_pair(u, v)}] - 1;
+                    dfsT(dfsT, v);
+                }
+                else
+                {
+                    dpT[v] = dpT[u];
+                    dfsT(dfsT, v);
+                }
+            }
+        };
+        dpT[T] = path.size() - 1;
+        dfsT(dfsT, T);
+        std::vector<G> cur(path.size(), inf);
+        Tree = new SegmentTree<G>(cur);
+        for (int u = 1; u <= n; ++u)
+        {
+            for (auto [v, w] : g[u])
+            {
+                if (!mp.contains({u, v})) // 说明不是最短路边需要更新答案
+                {
+                    if (dpS[u] <= dpT[v] and dpT[v] <= path.size() - 1 and dpS[u] >= 1)
+                    {
+                        Tree->rangeGetMin(dpS[u], dpT[v], disS[u] + disT[v] + w);
+                    }
+                }
+            }
+        }
+    }
+    G getShortestPath(int u, int v)
+    {
+        if (!mp.contains({u, v}))
+        {
+            return before;
+        }
+        else
+        {
+            return Tree->rangeQuerySum(mp[{u, v}], mp[{u, v}]);
+        }
+    }
+};

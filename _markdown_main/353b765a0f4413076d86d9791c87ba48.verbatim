@@ -1,0 +1,49 @@
+struct BiGraphColor
+{
+    std::vector<int> col;
+    bool isBiGraph;
+    int cnt1 = 0,cnt2 = 0;
+    BiGraphColor(const std::vector<std::vector<int>> &e) : col(e.size(), -1), isBiGraph(true)
+    {
+
+        int n = e.size() - 1;
+        std::function<void(int)> dfs = [&](int x)
+        {
+            if (!isBiGraph)
+            {
+                return;
+            }
+            for (int y : e[x])
+            {
+                if (col[y] == -1)
+                {
+                    col[y] = col[x] ^ 1;
+                    if (col[y] == 0)
+                    {
+                        cnt1++;
+                    }
+                    else
+                    {
+                        cnt2++;
+                    }
+                    dfs(y);
+                }
+                else if (col[y] == col[x])
+                {
+                    isBiGraph = false;
+                    return;
+                }
+            }
+        };
+        for (int i = 1; i <= n; i++)
+        {
+            if (col[i] == -1)
+            {
+                col[i] = 0;
+                dfs(i);
+            }
+            if (!isBiGraph)
+                return;
+        }
+    }
+};

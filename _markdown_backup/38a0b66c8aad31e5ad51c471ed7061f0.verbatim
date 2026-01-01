@@ -1,0 +1,61 @@
+template <class G>
+class BoundedMaxFlow
+{
+public:
+    BoundedMaxFlow(int n, int s, int t) : n(n), s(s), t(t), val(n + 2, 0) {}
+
+    void addEdge(int u, int v, G b, G c)
+    {
+        edges.emplace_back(u, v, b, c);
+    }
+
+    G compute()
+    {
+        Flow<G> flow(n + 2); // 包含超级源汇S=0, T=n+1
+        const int S = 0, T = n + 1;
+
+        // 构建基础网络
+        for (const auto &[u, v, b, c] : edges)
+        {
+            flow.add(u, v, c - b);
+            val[v] += b;
+            val[u] -= b;
+        }
+
+        // 添加补偿边
+        G sum = 0;
+        for (int i = 1; i <= n; ++i)
+        {
+            if (val[i] > 0)
+            {
+                sum += val[i];
+                flow.add(S, i, val[i]);
+            }
+            else if (val[i] < 0)
+            {
+                flow.add(i, T, -val[i]);
+            }
+        }
+
+        // 添加t->s的无限边
+        flow.add(t, s, std::numeric_limits<G>::max() / 2);
+        // 检查可行性
+        if (flow.work(S, T) != sum)
+        {
+            return -1; // 无解
+        }
+
+        // 计算最大流
+        G initialFlow = flow.e.back().second; // 最后一条边t-s的流量
+        flow.g[s].pop_back();
+        flow.g[t].pop_back();
+        G additionalFlow = flow.work(s, t);
+        return initialFlow + additionalFlow;
+    }
+
+private:
+    int n;                                         // 节点数
+    int s, t;                                      // 源汇点
+    std::vector<G> val;                            // 流量平衡
+    std::vector<std::tuple<int, int, G, G>> edges; // u,v,b,c
+};

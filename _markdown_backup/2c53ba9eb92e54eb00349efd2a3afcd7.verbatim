@@ -1,0 +1,121 @@
+// 长链剖分类（用于高效处理树上的k级祖先查询）
+struct LongChainSplit
+{
+    int n;                              // 节点数量（编号1~n）
+    std::vector<std::vector<int>> up;   // 存储每个链顶向上的节点序列
+    std::vector<std::vector<int>> down; // 存储每个链顶向下的节点序列（沿重儿子）
+    std::vector<std::vector<int>> &g;   // 树的邻接表（引用传递）
+    std::vector<std::vector<int>> f;    // 倍增表，f[u][i]表示u的2^i级祖先
+    std::vector<int> len;               // len[u]：u为根的子树中最长链长度
+    std::vector<int> son;               // son[u]：u的重儿子（最长链方向）
+    std::vector<int> dep;               // dep[u]：u的深度（根为1）
+    std::vector<int> top;               // top[u]：u所在长链的链顶节点
+    std::vector<int> lg;                // lg数组：预处理log2值
+    int bit;                            // 倍增的最大位数
+
+    // 第一次DFS：预处理深度、重儿子、倍增表
+    void dfs1(int u, int fa)
+    {
+        f[u][0] = fa; // u的1级祖先是fa
+        // 预处理倍增表（2^i级祖先）
+        for (int i = 1; i <= bit; i++)
+        {
+            f[u][i] = f[f[u][i - 1]][i - 1]; // 2^i = 2^(i-1) + 2^(i-1)
+        }
+        // 遍历子节点
+        for (auto v : g[u])
+        {
+            if (v != fa)
+            {
+                dep[v] = dep[u] + 1; // 更新深度
+                dfs1(v, u);
+                // 更新重儿子（选择子树链最长的）
+                if (len[v] > len[son[u]])
+                {
+                    son[u] = v;
+                }
+            }
+        }
+        len[u] = len[son[u]] + 1; // u的最长链长度 = 重儿子的最长链长度 + 1
+    }
+
+    // 第二次DFS：构建长链（剖分链）
+    void dfs2(int u, int tp)
+    {
+        top[u] = tp; // 记录u所在链的链顶
+        // 如果是链顶，预处理该链的向上和向下序列
+        if (u == tp)
+        {
+            // 向上序列：从u开始向上跳len[u]次（到根或链外）
+            for (int i = u, j = 0; j < len[u]; j++, i = f[i][0])
+            {
+                up[tp].push_back(i);
+            }
+            // 向下序列：从u开始沿重儿子走len[u]次
+            for (int i = u, j = 0; j <= len[u]; j++, i = son[i])
+            {
+                down[tp].push_back(i);
+            }
+        }
+        // 优先处理重儿子（保证长链连续）
+        if (son[u])
+        {
+            dfs2(son[u], tp);
+        }
+        // 处理其他轻儿子（新链的起点）
+        for (auto v : g[u])
+        {
+            if (v != f[u][0] && v != son[u])
+            {
+                dfs2(v, v);
+            }
+        }
+    }
+
+    // 查询x的k级祖先
+    int query(int x, int k)
+    {
+        if (!k)
+            return x; // 0级祖先是自己
+        // 先跳到x的2^lg[k]级祖先
+        x = f[x][lg[k]];
+        k -= (1 << lg[k]);         // 剩余需要跳的步数
+        k -= dep[x] - dep[top[x]]; // 调整到链顶的相对位置
+        x = top[x];
+        // 根据k的正负决定向上/向下查找
+        if (k >= 0)
+        {
+            return up[x][k]; // 从链顶向上跳k步
+        }
+        else
+        {
+            return down[x][-k]; // 从链顶向下跳-k步
+        }
+    }
+
+    // 构造函数：初始化并预处理
+    LongChainSplit(std::vector<std::vector<int>> &g, int root) : g(g),            // 树的邻接表
+                                                                 n(g.size() - 1), // 节点数（假设编号1~n）
+                                                                 up(n + 1),       // 初始化up数组
+                                                                 down(n + 1),     // 初始化down数组
+                                                                 len(n + 1),      // 初始化len数组
+                                                                 son(n + 1),      // 初始化son数组
+                                                                 dep(n + 1),      // 初始化dep数组
+                                                                 top(n + 1),      // 初始化top数组
+                                                                 lg(n + 1)        // 初始化lg数组
+    {
+        // 预处理log2值（查询时快速计算二进制最高位）
+        lg[0] = lg[1] = 0;
+        for (int i = 2; i <= n; i++)
+        {
+            lg[i] = lg[i >> 1] + 1;
+        }
+        // 计算倍增的位数（最大2^bit >= n）
+        bit = std::__lg(n) + 1;
+        // 初始化倍增表
+        f.assign(n + 1, std::vector<int>(bit + 1));
+        dep[root] = 1;    // 根节点深度为1
+        dfs1(root, 0);    // 第一次DFS预处理
+        dfs2(root, root); // 第二次DFS构建长链
+    }
+};

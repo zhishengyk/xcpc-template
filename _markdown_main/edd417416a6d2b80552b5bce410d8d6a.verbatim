@@ -1,0 +1,37 @@
+template <class T>
+struct Kruskal
+{
+    int n;
+    int comp;
+    DSU dsu;
+    std::vector<std::array<int, 3>> g;
+
+    Kruskal(int n) : n(n), dsu(n), comp(n) {}
+
+    void addEdge(int u, int v, int w)
+    {
+        g.push_back({w, u, v});
+    }
+
+    T getMstWeight()
+    {
+        // 排序边，按照边的权重升序排序
+        std::sort(g.begin(), g.end());
+
+        T mstWeight = 0;
+        for (auto &[w, u, v] : g)
+        {
+            if (!dsu.iscon(u, v))
+            {
+                dsu.merge(u, v);
+                mstWeight += w;
+                --comp;
+            }
+        }
+        if (comp != 1)
+        {
+            return -1;
+        }
+        return mstWeight;
+    }
+};

@@ -1,0 +1,695 @@
+% Dynamic Programming section generated from 动态规划.md
+% 所有代码块使用 lstlisting，公式按 LaTeX 语法微调
+
+\subsection{Subsequence DP | 子序列问题}
+
+    \subsubsection{LIS / LDS / 不升 / 不降子序列}
+        \txt{最长上升 / 下降 / 不升 / 不降子序列可用二分 + 贪心在 $O(n\log n)$ 内求出。典型做法维护一个数组 $f$，$f[k]$ 为长度为 $k$ 的子序列的最小末尾值。}
+
+    \subsubsection{LCS | 最长公共子序列}
+        \txt{给定字符串 $A,B$，常见做法有：}
+        \txt{1. 经典二维 DP：$dp[i][j]$ 表示 $A$ 前 $i$ 位与 $B$ 前 $j$ 位的 LCS 长度，复杂度 $O(nm)$。}
+        \txt{2. 若某一串中字符不重复，可用 LIS 化简：将另一串按该串重标并删去无关字符，在新序列上做 LIS。}
+        \txt{3. bitset + DP 的 bit-parallel 做法，可降到 $O(|A|\cdot |B|/w)$。下面给出字母集为小写英文字母的 bit-parallel LCS 模板。}
+
+        \begin{lstlisting}
+using u64 = unsigned long long;
+
+// 64 位块数表示的 bitset LCS（Hunt–Szymanski 风格 bit-parallel）
+// 时间 O(|a| * ((|b| + 63) / 64)), 空间 O(26 * blocks)
+int LCS(const std::string &a, const std::string &b) {
+    int n = (int)a.size(), m = (int)b.size();
+    if (n == 0 || m == 0) return 0;
+
+    int W = (m + 63) / 64;                   // 每个 bitset 需要的 u64 个数
+    std::vector<std::vector<u64>> pos(26, std::vector<u64>(W, 0ULL));
+
+    // 构造 pos：pos[c] 在 b 中字符 c 出现位置的位图
+    for (int j = 0; j < m; ++j) {
+        int c = b[j] - 'a';
+        pos[c][j >> 6] |= (1ULL << (j & 63));
+    }
+
+    std::vector<u64> dp(W, 0ULL), U(W), V(W), SUB(W);
+    // 最后一块只保留到 m 的有效位
+    u64 last_mask = (m % 64 == 0) ? ~0ULL : ((1ULL << (m % 64)) - 1ULL);
+
+    for (char ch : a) {
+        int idx = ch - 'a';
+
+        // U = dp | pos[idx]
+        for (int i = 0; i < W; ++i) {
+            U[i] = dp[i] | pos[idx][i];
+        }
+
+        // V = (dp << 1) | 1
+        u64 carry = 0;
+        for (int i = 0; i < W; ++i) {
+            u64 next_carry = dp[i] >> 63;
+            V[i] = (dp[i] << 1) | carry;
+            carry = next_carry;
+        }
+        V[0] |= 1ULL; // 位置 0 视作空前缀
+
+        // SUB = U - V（多块减法，考虑借位）
+        u64 borrow = 0ULL;
+        for (int i = 0; i < W; ++i) {
+            unsigned __int128 v_with_borrow =
+                (unsigned __int128)V[i] + (unsigned __int128)borrow;
+            u64 v64 = (u64)v_with_borrow;
+            u64 res = (u64)((unsigned __int128)U[i] - v_with_borrow);
+            SUB[i] = res;
+            borrow = (v_with_borrow > (unsigned __int128)U[i]) ? 1ULL : 0ULL;
+        }
+
+        // dp = U & ~SUB
+        for (int i = 0; i < W; ++i) {
+            dp[i] = U[i] & ~SUB[i];
+        }
+        // 清除最后块中超出 m 的位
+        dp[W - 1] &= last_mask;
+    }
+
+    // 统计 dp 中 1 的个数就是 LCS 长度
+    int ans = 0;
+    for (int i = 0; i < W; ++i) {
+        ans += __builtin_popcountll(dp[i]);
+    }
+    return ans;
+}
+        \end{lstlisting}
+
+\subsection{Partition of integers | 自然数划分问题}
+
+    \txt{考虑 $n$ 个自然数之和为 $m$ 的方案数。设 $f(i,j)$ 表示选了 $i$ 个数总和为 $j$ 的方案数。}
+
+    \subsubsection{可重复}
+        \txt{讨论是否包含数字 $1$：}
+        \txt{1. 至少包含一个 $1$，则去掉一个 $1$ 后为 $f(i-1,j-1)$。}
+        \txt{2. 不包含 $1$，则让当前 $i$ 个数全部减去 $1$，和变为 $j-i$，即 $f(i,j-i)$。}
+        \txt{转移为 $f(i,j) = f(i-1,j-1) + f(i,j-i)$，复杂度 $O(nm)$。}
+
+        \txt{更高阶做法是利用五边形数定理，复杂度 $O(m\sqrt{m})$。下面是一个以五边形数为核心的划分数模板（需配合取模函数 \texttt{norm}）。}
+
+        \begin{lstlisting}
+std::vector<int> calcPartition(int n) {
+    std::vector<long long> a(n), p(n);
+    p[0] = 1;
+    if (n > 1) p[1] = 1;
+    if (n > 2) p[2] = 2;
+    for (int i = 1; 2 * i + 1 < n; ++i) {
+        // 五边形数 1, 5, 12, 22, ...
+        a[2 * i]     = 1LL * i * (3 * i - 1) / 2;
+        a[2 * i + 1] = 1LL * i * (3 * i + 1) / 2;
+    }
+    for (int i = 3; i < n; ++i) {
+        for (int j = 2; a[j] <= i; ++j) {
+            // p[n] = p[n-1] + p[n-2] - p[n-5] - p[n-7] + ...
+            p[i] += ((j & 2) ? 1 : -1) * p[i - a[j]];
+            norm(p[i]);  // 视需要取模
+        }
+    }
+    std::vector<int> res(n);
+    for (int i = 0; i < n; ++i) res[i] = (int)p[i];
+    return res;
+}
+        \end{lstlisting}
+
+    \subsubsection{不可重复}
+        \txt{同样按是否包含 $1$ 分类：}
+        \txt{1. 恰好包含一个 $1$，则把每个数加 $1$，相当于 $f(i-1,j-i)$。}
+        \txt{2. 不包含 $1$，则同样每个数加 $1$，对应 $f(i,j-i)$。}
+        \txt{于是转移为 $f(i,j) = f(i-1,j-i) + f(i,j-i)$。}
+
+\subsection{Knapsack DP | 背包 DP}
+
+    \subsubsection{Multiple knapsack with monotone queue | 多重背包（单调队列优化）}
+        \txt{经典多重背包可以拆成若干 01 背包，或用单调队列对每个模 $w$ 的同余类优化。下面是按体积模 $w$ 分组、对每个组使用单调队列的模板。}
+
+        \begin{lstlisting}
+using i64 = long long;
+
+auto multiBag(std::vector<std::array<int, 3>> &goods, int S) {
+    // S 为总背包容量，goods: {value, weight, count}
+    std::vector<i64> f(S + 1, 0);
+    std::vector<int> q(S + 2, 0);
+
+    for (auto [v, w, m] : goods) {
+        auto calc = [&](int i, int j) {
+            // i, j 为同余类中的两个体积，i >= j
+            return f[j] + 1LL * (i - j) / w * v;
+        };
+        for (int up = S; up + w > S; --up) {
+            int l = 1, r = 0, k = up;
+            for (int x = up; x > 0; x -= w) {
+                for (; k >= std::max(0LL, 1LL * x - 1LL * m * w); k -= w) {
+                    while (l <= r && calc(x, k) > calc(x, q[r])) --r;
+                    q[++r] = k;
+                }
+                f[x] = calc(x, q[l]);
+                if (q[l] == x) ++l;
+            }
+        }
+    }
+    return f;
+}
+        \end{lstlisting}
+
+    \subsubsection{Tree knapsack | 树上背包}
+        \txt{树上背包常见于“在树上选点 / 边满足某种限制”的计数或最值题。一般在 DFS 时，用临时数组 \texttt{temp} 合并子树贡献，避免子树间的重复转移。}
+
+        \begin{lstlisting}
+template <class T>
+class PackageOnTree {
+    const T INF = std::numeric_limits<T>::max() / 2;
+
+public:
+    std::vector<std::vector<T>> dp;
+
+    PackageOnTree(int n, int m, int root)
+        : n(n), g(n + 1), siz(n + 1),
+          infCapacity(m), root(root) {
+        dp.assign(n + 1, std::vector<T>(m + 1, 0));
+    }
+
+    void addEdge(int u, int v, T w) {
+        g[u].emplace_back(v, w);
+        g[v].emplace_back(u, w);
+    }
+
+    void work() { dfs(root, 0); }
+
+private:
+    int infCapacity;
+    int n, root;
+    std::vector<std::vector<std::pair<int, T>>> g;
+    std::vector<int> siz;
+
+    // u 子树内选 cnt 个点，父边权为 w 的贡献
+    T calc(int u, T w, int cnt) {
+        return w * (cnt * (infCapacity - cnt)
+                  + (siz[u] - cnt) * (n - infCapacity - (siz[u] - cnt)));
+    }
+
+    void dfs(int u, int fa) {
+        dp[u][0] = 0;
+        siz[u] = 1;
+        for (auto [v, w] : g[u]) {
+            if (v == fa) continue;
+            dfs(v, u);
+            siz[u] += siz[v];
+            std::vector<T> temp(std::min(siz[u], infCapacity) + 1, 0);
+            for (int j = std::min(infCapacity, siz[u]); j >= 0; --j) {
+                for (int k = std::max(0, siz[v] + j - siz[u]);
+                     k <= std::min(siz[v], j); ++k) {
+                    temp[j] = std::max(
+                        temp[j],
+                        dp[u][j - k] + dp[v][k] + calc(v, w, k)
+                    );
+                }
+            }
+            for (int j = 0; j <= std::min(siz[u], infCapacity); ++j) {
+                dp[u][j] = temp[j];
+            }
+        }
+    }
+};
+        \end{lstlisting}
+
+\subsection{Interval DP | 区间 DP}
+
+    \txt{区间 DP 一般形如：}
+    \[
+        dp[i][j] = \min_{i \le k < j} \bigl(dp[i][k] + dp[k+1][j] + \text{cost}(i,j)\bigr),
+    \]
+    \txt{复杂度通常为 $O(n^3)$。常用技巧包括四边形不等式 / 决策单调性优化。}
+
+\subsection{Monotone queue optimization | 单调队列优化}
+
+    \txt{若 DP 形如 $dp[i] = \min\_j (dp[j] + \text{cost}(j,i))$，且对每个 $i$ 可行转移 $j$ 在某个滑动窗口内，则可用单调队列维护“候选 $j$ 的代价”，将复杂度降为线性。}
+
+\subsection{Monge decision optimization | 决策单调性优化}
+
+    \subsubsection{2D form}
+        \txt{典型二维形式：}
+        \[
+            dp[i][k] = \min_{1 \le j < i} \{ dp[j][k-1] + w(j+1,i) \},
+        \]
+        \txt{若满足决策单调性，即最优决策点在层间单调，则可用分治或二分队列优化。}
+
+        \paragraph{Divide and conquer优化}
+        \txt{在第 $k$ 层中，用分治求出区间 $[l,r]$ 的最优决策点在 $[L,R]$ 区间内，复杂度 $O(nk\log n)$。}
+
+        \begin{lstlisting}
+template <class T>
+class OptimizeDP2D {
+    const T INF = std::numeric_limits<T>::max() / 2;
+
+public:
+    std::vector<std::vector<T>> dp;
+    int n, K;
+
+    OptimizeDP2D(int n, int k) : n(n), K(k) {
+        dp.assign(n + 1, std::vector<T>(k + 1, 0));
+        for (int j = 1; j <= k; ++j) {
+            work(1, n, 1, n, j);
+        }
+    }
+
+private:
+    // 代价函数 w(l, r) 需按题意实现
+    T calcW(int l, int r) {
+        // TODO: 按题目实现
+        return 0;
+    }
+
+    // 在第 dep 层，求解区间 [l,r]，决策点限制在 [L,R]
+    void work(int l, int r, int L, int R, int dep) {
+        if (l > r) return;
+        int mid = (l + r) >> 1;
+        T best = -INF;
+        int opt = -1;
+        for (int i = std::min(R, mid); i >= L; --i) {
+            T val = dp[i - 1][dep - 1] + calcW(i, mid);
+            if (val > best) {
+                best = val;
+                opt = i;
+            }
+        }
+        dp[mid][dep] = best;
+        work(l, mid - 1, L, opt, dep);
+        work(mid + 1, r, opt, R, dep);
+    }
+};
+        \end{lstlisting}
+
+        \paragraph{Binary-search queue优化}
+        \txt{也可用“决策区间 + 队列”维护三元组 $[j,l,r]$，在队列上二分找到每个位置的最优决策点，复杂度同样为 $O(nk\log n)$。代码与 1D 形式极为相似，此处不再赘述。}
+
+    \subsubsection{1D form}
+        \txt{一维形式：}
+        \[
+            dp[i] = \min_{1 \le j < i} \{ dp[j] + w(j+1,i) \},
+        \]
+        \txt{决策单调性出现在同一层内部，无法分治，只能使用二分队列方法维护一个凸壳队列。}
+
+        \begin{lstlisting}
+template <class T>
+class OptimizeDP1D {
+    const T INF = std::numeric_limits<T>::max() / 2;
+
+public:
+    std::vector<T> dp;
+
+    explicit OptimizeDP1D(int n) : n(n) {
+        dp.assign(n + 1, INF);
+        dp[0] = 0;
+        work();
+    }
+
+private:
+    int n;
+
+    T getW(int l, int r) {
+        // TODO: 按题意实现 w(l, r)
+        return 0;
+    }
+
+    T getDP(int l, int r) {
+        return dp[l] + getW(l + 1, r);
+    }
+
+    void work() {
+        std::vector<std::array<int, 3>> q(n + 1);
+        // q[t] = {j, L, R} 表示在 [L,R] 内的最优转移点为 j
+        int hh = 1, tt = 0;
+        q[++tt] = {0, 1, n};
+        for (int i = 1; i <= n; ++i) {
+            while (hh < tt && q[hh][2] < i) ++hh;
+            q[hh][1] = i;
+            int k = q[hh][0];
+            dp[i] = getDP(k, i);
+
+            while (hh < tt && getDP(q[tt][0], q[tt][1]) >= getDP(i, q[tt][1])) {
+                --tt;
+            }
+            q[tt][2] = n;
+            int L = q[tt][1], R = q[tt][2];
+            int pos = n + 1;
+            while (L <= R) {
+                int mid = (L + R) >> 1;
+                if (getDP(q[tt][0], mid) >= getDP(i, mid)) {
+                    R = mid - 1;
+                    pos = mid;
+                } else {
+                    L = mid + 1;
+                }
+            }
+            if (pos != n + 1) {
+                q[tt][2] = pos - 1;
+                q[++tt] = {i, pos, n};
+            }
+        }
+    }
+};
+        \end{lstlisting}
+
+\subsection{Slope trick / Convex hull optimization | 斜率优化}
+
+    \txt{斜率优化适用于形如}
+    \[
+        dp[i] = \min_j \bigl(dp[j] + w_1(i) + w_2(j) + f(i)g(j)\bigr)
+    \]
+    \txt{的 DP。令 $y = dp[j] + w_2(j)$，$x = g(j)$，$k = -f(i)$，$b = dp[i] - w_1(i)$，可化为直线形式 $y = kx + b$，问题转化为在一堆点 $(x,y)$ 中找使得 $b$ 最优的点。若 $x$ 与 $k$ 都具备单调性，可用单调队列维护凸壳；若只有 $x$ 单调，则使用二分队列。}
+
+    \subsubsection{Monotone queue version}
+
+        \begin{lstlisting}
+template <class T>
+class ConvexHullTrick {
+    const T INF = std::numeric_limits<T>::max() / 2;
+
+public:
+    std::vector<T> dp;
+
+    explicit ConvexHullTrick(int n) : n(n) {
+        dp.assign(n + 1, INF);
+        dp[0] = 0;
+        work();
+    }
+
+private:
+    int n;
+
+    T calcX(int x) {
+        // TODO: 按题意实现
+        return 0;
+    }
+
+    T calcY(int x) {
+        // TODO: 按题意实现
+        return 0;
+    }
+
+    T calcK(int x) {
+        // TODO: 按题意实现斜率 k(i)
+        return 0;
+    }
+
+    long double calcSlope(int l, int r) {
+        if (calcX(r) == calcX(l)) return INF;
+        return (long double)(calcY(r) - calcY(l)) /
+               (long double)(calcX(r) - calcX(l));
+    }
+
+    T calcVal(int i, int j) {
+        // TODO: 返回用 j 转移到 i 的代价
+        return 0;
+    }
+
+    void work() {
+        int hh = 0, tt = -1;
+        std::vector<int> q(n + 1, 0);
+        q[++tt] = 0;
+        for (int i = 1; i <= n; ++i) {
+            T k = calcK(i);
+            while (hh < tt && calcSlope(q[hh], q[hh + 1]) <= k) ++hh;
+            int j = q[hh];
+            dp[i] = dp[j] + calcVal(i, j);
+            while (hh < tt &&
+                   calcSlope(q[tt - 1], q[tt]) >= calcSlope(q[tt], i)) {
+                --tt;
+            }
+            q[++tt] = i;
+        }
+    }
+};
+        \end{lstlisting}
+
+    \subsubsection{Binary-search queue version}
+
+        \begin{lstlisting}
+template <class T>
+class ConvexHullTrickBS {
+    const T INF = std::numeric_limits<T>::max() / 2;
+
+public:
+    std::vector<T> dp;
+
+    explicit ConvexHullTrickBS(int n) : n(n) {
+        dp.assign(n + 1, INF);
+        dp[0] = 0;
+        work();
+    }
+
+private:
+    int n;
+
+    T calcX(int x) { return 0; }  // TODO
+    T calcY(int x) { return 0; }  // TODO
+    T calcK(int x) { return 0; }  // TODO
+
+    long double calcSlope(int l, int r) {
+        if (calcX(r) == calcX(l)) return INF;
+        return (long double)(calcY(r) - calcY(l)) /
+               (long double)(calcX(r) - calcX(l));
+    }
+
+    T calcVal(int i, int j) { return 0; }  // TODO
+
+    void work() {
+        int hh = 0, tt = -1;
+        std::vector<int> q(n + 1, 0);
+        q[++tt] = 0;
+
+        auto findOptimizePoint = [&](int L, int R, T k) {
+            int ans = R;
+            while (L <= R) {
+                int mid = (L + R) >> 1;
+                if (calcSlope(q[mid], q[mid + 1]) > k) {
+                    R = mid - 1;
+                    ans = mid;
+                } else {
+                    L = mid + 1;
+                }
+            }
+            return q[ans];
+        };
+
+        for (int i = 1; i <= n; ++i) {
+            T k = calcK(i);
+            int j = findOptimizePoint(0, tt - 1, k);
+            dp[i] = dp[j] + calcVal(i, j);
+            while (hh < tt &&
+                   calcSlope(q[tt - 1], q[tt]) >= calcSlope(q[tt], i)) {
+                --tt;
+            }
+            q[++tt] = i;
+        }
+    }
+};
+        \end{lstlisting}
+
+\subsection{WQS binary / weight binary search | WQS 二分}
+
+    \txt{WQS（二分斜率）用于解决“强制选恰好 $m$ 个物品”的最优方案，前提是 $f(m)$ 对 $m$ 是凸的（一次差分单调）。}
+    \txt{通过给每个被选物品减去一个惩罚权重 $\lambda$，将“选 $m$ 个”的限制吸收到代价中，变成不限制个数的简单 DP，并根据最后选的个数与目标 $m$ 的关系二分 $\lambda$。}
+
+\subsection{Dynamic DP | 动态 DP}
+
+    \txt{引入广义矩阵乘法 $C = A \ast B$，定义}
+    \[
+        C_{ij} = \max_k (A_{ik} + B_{kj})
+    \]
+    \txt{很多从左到右的线性 DP 可写成广义矩阵乘，与线段树结合可支持区间修改与查询。例：}
+    \[
+        f(i) = \max(f(i-1) + a_i, b_i),
+    \]
+    \txt{可写作}
+    \[
+        \begin{bmatrix} a_i & b_i \\ -\infty & 0 \end{bmatrix}
+        \ast
+        \begin{bmatrix} f(i-1) \\ 0 \end{bmatrix}
+        =
+        \begin{bmatrix} f(i) \\ 0 \end{bmatrix}.
+    \]
+
+\subsection{Bitmask DP | 状压 DP}
+
+    \subsubsection{SOS DP（子集和 DP）}
+        \txt{要在所有 $0 \le i < 2^n$ 上求 $\sum\_{j \subseteq i} a\_j$，朴素枚举子集复杂度 $O(3^n)$。SOS DP 的优化为：}
+
+        \begin{lstlisting}
+// 枚举子集的朴素写法
+for (int s = 0; s < (1 << n); ++s) {
+    for (int T = s; T; T = (T - 1) & s) {
+        dp[s] += a[T];
+    }
+}
+
+// SOS DP 优化：dp[i] 最终为所有子集的和
+for (int j = 0; j < n; ++j) {
+    for (int i = 0; i < (1 << n); ++i) {
+        if (i >> j & 1) {
+            dp[i] += dp[i ^ (1 << j)];
+        }
+    }
+}
+        \end{lstlisting}
+
+\subsection{Digit DP | 数位 DP}
+
+    \txt{数位 DP 一般按位从高到低枚举，用记忆化搜索解决。常见状态参数包括：}
+    \txt{1. \texttt{pos}：当前处理的位数。}
+    \txt{2. \texttt{limit}：本位是否受上界限制。}
+    \txt{3. \texttt{lead0}：前缀是否全是前导零。}
+    \txt{4. \texttt{last}：上一位的取值（如有相邻位约束）。}
+    \txt{5. \texttt{sum} / \texttt{r} / \texttt{st}：数位和、模值、状态压缩等。}
+
+    \begin{lstlisting}
+class DigitDP {
+public:
+    DigitDP(int maxLen, int base)
+        : a(maxLen + 1), base(base) {
+        // f 按题意开维度并初始化为 -1
+    }
+
+    int solve(int L, int R) {
+        return calc(R) - calc(L - 1);
+    }
+
+private:
+    std::vector<int> a;
+    // 具体形状视题目而定，例如 f[pos][sum][r][...]
+    // std::vector<std::vector<int>> f;
+    int base;
+
+    // pos: 当前位 (从高到低)，limit: 是否受上界限制
+    // lead0: 是否仍在前导零，r/sum/last/st 等按题目添加
+    int dfs(int pos, bool limit, bool lead0,
+            int r, int last, int sum) {
+        if (pos == 0) {
+            // 判断当前数是否满足题目要求
+            if (/* condition */) {
+                return 1;  // 或返回 sum 等属性
+            } else {
+                return 0;
+            }
+        }
+        // 若不受限制且已记忆，直接返回
+        // if (!limit && f[pos][...] != -1) return f[pos][...];
+
+        int up = limit ? a[pos] : base - 1;
+        int res = 0;
+        for (int d = 0; d <= up; ++d) {
+            bool nlimit = limit && (d == up);
+            bool nlead0 = lead0 && (d == 0);
+            if (nlead0) {
+                // 仍在前导零
+                res += dfs(pos - 1, nlimit, nlead0,
+                           /* r */, /* last */, /* sum */);
+            } else {
+                if (/* transition is valid */) {
+                    res += dfs(pos - 1, nlimit, nlead0,
+                               /* new r */, /* new last */, /* new sum */);
+                }
+            }
+        }
+        // if (!limit) f[pos][...] = res;
+        return res;
+    }
+
+    int calc(int x) {
+        if (x < 0) return 0;
+        int len = 0;
+        while (x) {
+            a[++len] = x % base;
+            x /= base;
+        }
+        return dfs(len, true, true, 0, -1, 0);
+    }
+};
+        \end{lstlisting}
+
+\subsection{Tree DP | 树形 DP}
+
+    \subsubsection{Rerooting DP | 换根 DP}
+        \txt{换根 DP 分为“点换根”和“边换根”，常见做法有两种：}
+        \txt{1. 两次 DFS + 一个数组：第一次以固定根算出子树 DP，第二次换根传递。}
+        \txt{2. 两次 DFS，维护 $F(u)$（子树内答案）与 $G(u)$（子树外答案），最后将两者合并。}
+
+        \paragraph{前后缀积 Trick}
+        \txt{当转移为子树乘积形式且需要取模时，用前后缀积避免除法与逆元。例子：}
+        \[
+            f[u] = \prod_{v \in \text{son}(u)} (f[v] + 1).
+        \]
+
+        \begin{lstlisting}
+template <class T>
+class PreSufOptimizeDP {
+public:
+    std::vector<T> dp;
+
+    explicit PreSufOptimizeDP(std::vector<std::vector<int>> &g)
+        : g(g), dp(g.size()),
+          pre(g.size()), suf(g.size()) {
+        dfs1(1, 0);
+        dfs2(1, 0);
+    }
+
+private:
+    std::vector<std::vector<int>> g;
+    std::vector<std::vector<T>> pre, suf;
+
+    void dfs1(int u, int fa) {
+        dp[u] = 1;
+        pre[u].push_back(1);
+        for (auto v : g[u]) {
+            if (v == fa) continue;
+            dfs1(v, u);
+            dp[u] = dp[u] * (dp[v] + 1);
+            pre[u].push_back(dp[v] + 1);
+            suf[u].push_back(dp[v] + 1);
+        }
+        suf[u].push_back(1);
+        for (int i = 1; i < (int)pre[u].size(); ++i) {
+            pre[u][i] = pre[u][i] * pre[u][i - 1];
+        }
+        for (int i = (int)suf[u].size() - 2; i >= 0; --i) {
+            suf[u][i] = suf[u][i] * suf[u][i + 1];
+        }
+    }
+
+    // 原式: dp[v] = dp[v] * (dp[u] / (dp[v] + 1) + 1)
+    void dfs2(int u, int fa) {
+        int idx = 0;
+        for (auto v : g[u]) {
+            if (v == fa) continue;
+            dp[v] = dp[v] * (pre[u][idx] * suf[u][idx + 1] + 1);
+            ++idx;
+            dfs2(v, u);
+        }
+    }
+};
+        \end{lstlisting}
+
+\subsection{DP with after-effect | 带后效性的 DP}
+
+    \txt{当转移存在环路或无法直接拓扑化时，DP 方程本质上是一组线性方程，可用待定系数或高斯消元求解。}
+
+    \subsubsection{Method of undetermined coefficients | 待定系数法}
+        \txt{典型应用是树上随机游走的期望问题。设 $DP(x)$ 为从 $x$ 开始到达叶子的期望步数，转移大致形如}
+        \[
+            DP(x) = \frac{1 + \sum\_{y \in N(x)} DP(y)}{\deg(x)},
+        \]
+        \txt{由于包含父子互相依赖，可设 $DP(x) = k\_x \cdot DP(fa[x]) + b\_x$，把子树的 $DP$ 形式带回父节点方程中，递推得到所有 $k,b$，最终在根处解出答案。}
+
+    \subsubsection{Gaussian elimination | 高斯消元}
+        \txt{更一般的线性 DP 可直接写成线性方程组，用高斯消元在 $O(n^3)$ 时间内解出。若系数矩阵为带状，可降到 $O(nd^2)$。}
+
+        \txt{例如在一般图上随机游走的期望次数，可对每个点写出}
+        \[
+            DP(i) = \sum\_{(i,j)\in E} \frac{DP(j)}{\deg(j)} + c\_i,
+        \]
+        \txt{将 $DP(n)$ 固定为边界条件，在其他点上联立方程，用高斯消元即可。}
+

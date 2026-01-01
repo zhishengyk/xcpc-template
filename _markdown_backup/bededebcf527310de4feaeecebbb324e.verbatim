@@ -1,0 +1,71 @@
+struct RingTree
+{
+    std::vector<std::vector<std::pair<int, int>>> g; // 基环树上的小树
+    std::vector<int> ring, ringVal;                  // 环,环的出点的权值
+    // ringVal[i]对应的是 ring[i]和ring[i+1]的权值
+
+    RingTree(std::vector<std::vector<std::pair<int, int>>> e) : g(e.size())
+    {
+        int n = e.size() - 1;
+        std::vector<int> vis(n + 1, 0), deg(n + 1, 0);
+        for (int u = 1; u <= n; ++u)
+        {
+            for (auto [v, w] : e[u])
+            {
+                deg[v]++;
+            }
+        }
+        auto dfs1 = [&](auto dfs1, int u) -> void
+        {
+            vis[u] = 1;
+            for (auto [v, w] : e[u])
+            {
+                if (!vis[v])
+                {
+                    // dsu.merge(u, v);
+                    g[v].emplace_back(u, w);
+                    deg[v]--;
+                    if (deg[v] == 1)
+                    {
+                        dfs1(dfs1, v);
+                    }
+                }
+            }
+        };
+        for (int i = 1; i <= n; ++i)
+        {
+            if (!vis[i] and deg[i] == 1) // 从叶子开始剥离树的结构
+            {
+                dfs1(dfs1, i);
+            }
+        }
+        auto dfs2 = [&](auto dfs2, int u) -> void
+        {
+            ring.push_back(u);
+            vis[u] = 1;
+            for (auto [v, w] : e[u])
+            {
+                if (!vis[v])
+                {
+                    ringVal.push_back(w);
+                    dfs2(dfs2, v);
+                }
+            }
+        };
+        for (int i = 1; i <= n; ++i)
+        {
+            if (!vis[i]) // 一定是环点
+            {
+                dfs2(dfs2, i); // 找到整个环
+                for (auto [v, w] : e[ring.back()])
+                {
+                    if (v == ring.front())
+                    {
+                        ringVal.push_back(w); // 把环起点和终点的边权加入
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};

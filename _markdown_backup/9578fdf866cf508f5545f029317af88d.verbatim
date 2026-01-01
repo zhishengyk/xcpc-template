@@ -1,0 +1,77 @@
+
+struct BuildGraph
+{
+    int n, log;
+    DSU *dsu;
+    std::vector<std::vector<int>> f;
+    std::vector<int> lc, rc;
+    BuildGraph(int n) : n(n)
+    {
+        log = std::__lg(n) + 1;
+        f.assign(log, std::vector<int>(n + 1, 0));
+        for (int i = 1; i <= n; ++i)
+        {
+            f[0][i] = i;
+        }
+        int idx = n;
+        for (int i = log - 1; i >= 1; --i)
+        {
+            for (int j = 1; j + (1 << i) - 1 <= n; ++j)
+            {
+                f[i][j] = ++idx;
+            }
+        }
+        lc.assign(idx + 1, -1);
+        rc.assign(idx + 1, -1);
+        dsu = new DSU(idx + 1);
+    }
+    void merge(int l1, int r1, int l2, int r2)
+    {
+        int len = r1 - l1 + 1;
+        for (int i = log - 1; i >= 0; --i)
+        {
+            if (len >= (1 << i))
+            {
+                dsu->merge(f[i][l1], f[i][l2]);
+                len -= (1 << i);
+                l1 += (1 << i);
+                l2 += (1 << i);
+            }
+        }
+    }
+    void pushall()
+    {
+        for (int i = log - 1; i >= 1; --i)
+        {
+            for (int j = 1; j + (1 << i) - 1 <= n; ++j)
+            {
+                int root = dsu->root(f[i][j]);
+                if (lc[root] != -1)
+                {
+                    dsu->merge(lc[root], f[i - 1][j]);
+                    dsu->merge(rc[root], f[i - 1][j + (1 << i - 1)]);
+                }
+                else
+                {
+                    lc[root] = f[i - 1][j];
+                    rc[root] = f[i - 1][j + (1 << i - 1)];
+                }
+            }
+            for (int j = 1; j + (1 << i) - 1 <= n; ++j)
+            {
+                int root = dsu->root(f[i][j]);
+                lc[root] = rc[root] = -1;
+            }
+        }
+    }
+    std::vector<int> calc()
+    {
+        pushall();
+        std::vector<int> ans(n + 1);
+        for (int i = 1; i <= n; ++i)
+        {
+            ans[i] = dsu->root(i);
+        }
+        return ans;
+    } //
+};

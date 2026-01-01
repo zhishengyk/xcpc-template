@@ -1,0 +1,863 @@
+% String algorithms section generated from 字符串.md
+% 所有代码块使用 lstlisting，公式按 LaTeX 语法微调
+
+\subsection{String Hash | 字符串哈希}
+
+    \txt{注意哈希传入的字符串都是 $1$-index。}
+
+    \subsubsection{Ordered string hash | 有序字符串哈希}
+        \txt{考虑哈希函数 $f(n)=\sum_{i=1}^{n} s[i]\cdot \text{Base}^{\,n-i}$。预处理前缀哈希 $H(i)$ 与幂数组 $Hash(i)$ 后，区间 $[l,r]$ 的哈希值为
+        \[
+            f[l,r] = H(r) - H(l-1)\cdot \text{Base}^{\,r-l+1}.
+        \]}
+
+        \begin{lstlisting}
+struct StringHash {
+    int n;
+    std::vector<int> Hash;
+    std::vector<int> H;
+    int Base, P;
+
+    // 默认字符串加了前导字符，s[0] 不使用
+    StringHash(const std::string &s, int Base, int P)
+        : n(s.size()), Hash(n), H(n), Base(Base), P(P) {
+        Hash.assign(n, 0);
+        H.assign(n, 0);
+        Hash[0] = 1;
+        for (int i = 1; i <= n - 1; ++i) {
+            Hash[i] = 1LL * Hash[i - 1] * Base % P;
+        }
+        for (int i = 1; i <= n - 1; ++i) {
+            H[i] = (1LL * H[i - 1] * Base % P + s[i]) % P;
+        }
+    }
+
+    int operator()(int l, int r) const {
+        return (H[r] - 1LL * H[l - 1] * Hash[r - l + 1] % P + P) % P;
+    }
+};
+        \end{lstlisting}
+
+    \subsubsection{Unordered string hash | 无序字符串哈希}
+        \txt{考虑哈希函数 $f(n)=\sum_{i=1}^{n} h(s[i])$，其中 $h(x)$ 为预先随机的权值，只要求相同字符对应的 $h(x)$ 相同即可。}
+
+        \begin{lstlisting}
+struct StringHash {
+    int n;
+    std::vector<int> Hash;
+    std::vector<int> H;
+    int Base, P;
+
+    // a 为 1-index 的离散值数组，max 为值域上界
+    StringHash(std::vector<int> &a, int maxv, int Base, int P)
+        : n(a.size()), Base(Base), P(P) {
+        Hash.assign(maxv + 1, 0);
+        H.assign(n, 0);
+        Hash[0] = 1;
+        for (int i = 1; i <= maxv; ++i) {
+            Hash[i] = 1LL * Hash[i - 1] * Base % P;
+        }
+        for (int i = 1; i <= n - 1; ++i) {
+            H[i] = (H[i - 1] + Hash[a[i]]) % P;
+        }
+    }
+
+    int operator()(int l, int r) const {
+        return (H[r] - H[l - 1] + P) % P;
+    }
+};
+        \end{lstlisting}
+
+    \subsubsection{2D ordered hash | 二维有序字符串哈希}
+
+        \begin{lstlisting}
+using u64 = unsigned long long;
+
+struct Hash2D {
+    int n, m;
+    std::vector<u64> hX;                 // 行方向 Base 的幂
+    std::vector<u64> hY;                 // 列方向 Base 的幂
+    std::vector<std::vector<u64>> A;     // 哈希前缀和
+    int P, Q;                            // 两个 Base，分别为行和列
+
+    Hash2D(const std::vector<std::vector<char>> &a,
+           int n, int m, int P, int Q)
+        : n(n), m(m), hX(n + 1), hY(m + 1), A(n + 1, std::vector<u64>(m + 1, 0)),
+          P(P), Q(Q) {
+        hX[0] = 1;
+        hY[0] = 1;
+        for (int i = 1; i <= n; ++i) {
+            hX[i] = hX[i - 1] * P;
+        }
+        for (int j = 1; j <= m; ++j) {
+            hY[j] = hY[j - 1] * Q;
+        }
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= m; ++j) {
+                A[i][j] = A[i][j - 1] * Q
+                        + A[i - 1][j] * P
+                        - A[i - 1][j - 1] * P * Q
+                        + (a[i][j] - 'a' + 1);
+            }
+        }
+    }
+
+    u64 query(int x1, int y1, int x2, int y2) const {
+        return A[x2][y2]
+             - A[x2][y1 - 1] * hY[y2 - y1 + 1]
+             - A[x1 - 1][y2] * hX[x2 - x1 + 1]
+             + A[x1 - 1][y1 - 1] * hX[x2 - x1 + 1] * hY[y2 - y1 + 1];
+    }
+};
+        \end{lstlisting}
+
+\subsection{Minimal representation | 最小表示法}
+
+    \txt{返回一个序列字典序最小的循环同构串。常用于最小循环同构、项链问题等。}
+
+    \begin{lstlisting}
+std::vector<int> minimalString(std::vector<int> &a) {
+    int n = a.size();
+    int i = 0, j = 1, k = 0;
+    while (k < n && i < n && j < n) {
+        if (a[(i + k) % n] == a[(j + k) % n]) {
+            ++k;
+        } else {
+            if (a[(i + k) % n] > a[(j + k) % n]) {
+                i += k + 1;
+            } else {
+                j += k + 1;
+            }
+            if (i == j) ++i;
+            k = 0;
+        }
+    }
+    int start = std::min(i, j);
+    std::vector<int> ans(n);
+    for (int t = 0; t < n; ++t) {
+        ans[t] = a[(t + start) % n];
+    }
+    return ans;
+}
+    \end{lstlisting}
+
+    \txt{Trick：若有一堆字符串，按某种顺序拼接使得整体字典序最小，只需按比较规则 $a+b < b+a$ 排序。}
+
+\subsection{KMP}
+
+    \txt{对于字符串 $S$，KMP 通过前缀函数（失配函数）维护 $fail(i)$：表示以 $i$ 为结尾的前缀串的最长相等前后缀的长度。}
+    \txt{模式串 $t$ 在文本串 $s$ 中的出现位置，可在 $t\#s$ 上跑一遍前缀函数，凡是 $fail(i)=|t|$ 的位置均为一次匹配。}
+
+    \begin{lstlisting}
+class KMP {
+public:
+    KMP() = default;
+
+    std::vector<int> getPreFunction(std::string &s) {
+        return kmp(s);
+    }
+
+    // 在 s 中找 t，返回所有匹配起始下标（0-index）
+    std::vector<int> getMatchPos(std::string &s, std::string &t) {
+        std::vector<int> pos;
+        auto link = kmp(t + "#" + s);  // 在 s 中找 t
+        for (int i = (int)t.size() + 1; i < (int)link.size(); ++i) {
+            if (link[i] == (int)t.size()) {
+                pos.push_back(i - 2 * (int)t.size() + 1);
+            }
+        }
+        return pos;
+    }
+
+private:
+    std::vector<int> kmp(const std::string &s) {
+        int n = s.size();
+        std::vector<int> link(n);
+        for (int i = 1, j = 0; i < n; ++i) {
+            while (j && s[i] != s[j]) {
+                j = link[j - 1];
+            }
+            if (s[i] == s[j]) ++j;
+            link[i] = j;
+        }
+        return link;
+    }
+};
+    \end{lstlisting}
+
+\subsection{Z-function（扩展 KMP）}
+
+    \txt{对于字符串 $S$，$Z(i)$ 表示后缀 $S[i,\dots]$ 与整个串 $S$ 的最长公共前缀长度。实现时维护一个当前最右的 $Z$-box 区间 $[l,r]$ 以加速转移，约定 $Z(0)=0$。}
+
+    \begin{lstlisting}
+class ZFunction {
+public:
+    ZFunction() = default;
+
+    // 单串 Z 函数
+    std::vector<int> getZFunction(const std::string &s) {
+        return zFunction(s);
+    }
+
+    // 得到字符串 s 的每个后缀与 t 的前缀匹配长度
+    std::vector<int> getMatch(const std::string &s, const std::string &t) {
+        auto z = zFunction(t + "#" + s);
+        return std::vector<int>(z.begin() + t.size() + 1, z.end());
+    }
+
+private:
+    std::vector<int> zFunction(const std::string &s) {
+        int n = s.size();
+        std::vector<int> z(n);
+        int l = 0, r = 0;
+        for (int i = 1; i < n; ++i) {
+            if (i < r) {
+                z[i] = std::min(z[i - l], r - i);
+            }
+            while (i + z[i] < n && s[i + z[i]] == s[z[i]]) {
+                ++z[i];
+            }
+            if (i + z[i] > r) {
+                l = i;
+                r = i + z[i];
+            }
+        }
+        return z;
+    }
+};
+    \end{lstlisting}
+
+\subsection{Manacher}
+
+    \txt{Manacher 算法在线性时间内求出每个位置为中心的最长回文半径。常见做法是在原串间插入分隔符，统一奇偶回文的处理。}
+
+    \begin{lstlisting}
+std::vector<int> manacher(const std::string &s) {
+    std::string t;
+    t.reserve(s.size() * 2 + 1);
+    t.push_back('#');
+    for (char c : s) {
+        t.push_back(c);
+        t.push_back('#');
+    }
+    int n = t.size();
+    std::vector<int> r(n);
+    int center = 0;
+    for (int i = 0; i < n; ++i) {
+        if (2 * center - i >= 0 && center + r[center] > i) {
+            r[i] = std::min(r[2 * center - i], center + r[center] - i);
+        }
+        while (i - r[i] >= 0 && i + r[i] < n && t[i - r[i]] == t[i + r[i]]) {
+            ++r[i];
+        }
+        if (i + r[i] > center + r[center]) {
+            center = i;
+        }
+    }
+    for (auto &x : r) --x;  // 去掉分隔符的贡献
+    return r;
+}
+    \end{lstlisting}
+
+\subsection{Minimal period | 最小循环节}
+
+    \txt{判断一个串是否有长度为 $d$ 的循环节，只需比较区间 $[l,r-d]$ 与 $[l+d,r]$ 是否完全相同。}
+    \txt{最小循环节长度一定是 $len$ 的因子，可用字符串哈希配合质因数分解不断尝试缩小周期。}
+
+    \begin{lstlisting}
+int findMinimalCycle(std::string s) {
+    int len = (int)s.length();
+    s = ' ' + s;  // 1-index
+    int l = 1, r = len;
+    StringHash hash(s, 13331, 998244353);
+    int ans = len;
+    int tmp = len;
+    while (tmp != 1) {
+        int p = minPrimeFactor(tmp);
+        int d = ans / p;
+        if (hash(l, r - d) == hash(l + d, r)) {
+            ans = d;
+        }
+        tmp /= p;
+    }
+    return ans;
+}
+    \end{lstlisting}
+
+\subsection{Lyndon decomposition | Lyndon 分解}
+
+    \txt{Lyndon 串定义为本身严格小于其所有非空真后缀的串。任意串都存在唯一的 Lyndon 分解
+    \[
+        s = w_1 w_2 \dots w_k,\quad w_1 \ge w_2 \ge \dots \ge w_k,
+    \]
+    其中每个 $w_i$ 是 Lyndon 串。}
+
+    \begin{lstlisting}
+// 返回每个 Lyndon 块的右端点（1-index，下标相对原串）
+std::vector<int> Lyndon(std::string s) {
+    std::vector<int> res;
+    int n = s.length();
+    s = ' ' + s;
+    for (int i = 1; i <= n; ) {
+        int j = i, k = i + 1;
+        while (k <= n && s[j] <= s[k]) {
+            if (s[j] < s[k]) {
+                j = i;
+            } else {
+                ++j;
+            }
+            ++k;
+        }
+        while (i <= j) {
+            res.push_back(i + k - j - 1);
+            i += k - j;
+        }
+    }
+    return res;
+}
+    \end{lstlisting}
+
+\subsection{Subsequence automaton | 子序列自动机}
+
+    \txt{子序列自动机预处理 $next[i][c]$：从位置 $i$ 开始往后，第一个字符 $c$ 出现的位置。朴素做法时间复杂度 $O(n\cdot \Sigma)$。}
+
+    \begin{lstlisting}
+template <int Z, char Base>
+struct SubSequenceAutomaton {
+    std::vector<std::array<int, Z>> next;
+    int n;
+
+    // s 默认加过前缀空字符，1-index
+    explicit SubSequenceAutomaton(const std::string &s)
+        : n((int)s.size() - 1), next(n + 1) {
+        for (int c = 0; c < Z; ++c) {
+            next[n][c] = n + 1;
+        }
+        for (int i = n - 1; i >= 0; --i) {
+            next[i] = next[i + 1];
+            next[i][s[i + 1] - Base] = i + 1;
+        }
+    }
+
+    int getNextPos(int pos, char c) const {
+        return next[pos][c - Base];
+    }
+};
+    \end{lstlisting}
+
+    \txt{当字符集很大时，可以用可持久化线段树压缩值域，仅在发生改变的位置更新，查询复杂度降为 $O(\log n)$。}
+
+    \subsubsection{Subsequence automaton with President tree | 主席树优化子序列自动机}
+
+        \begin{lstlisting}
+struct PresidentTree {
+    int idx = 0;
+    int n;
+    std::vector<int> root, lc, rc;
+    std::vector<int> sum;
+
+    void pushup(int u) {
+        sum[u] = sum[lc[u]] + sum[rc[u]];
+    }
+
+    // a 为值域数组，len 为时间轴长度
+    PresidentTree(const std::vector<int> &a, int len)
+        : n(a.size()), root(len + 1),
+          lc(len * 40), rc(len * 40), sum(len * 40) {
+        // 传入的 a 实际上是值域
+        std::function<void(int &, int, int)> build =
+            [&](int &u, int l, int r) {
+                u = ++idx;
+                if (l == r) {
+                    sum[u] = a[l];
+                    return;
+                }
+                int mid = (l + r) >> 1;
+                build(lc[u], l, mid);
+                build(rc[u], mid + 1, r);
+                pushup(u);
+            };
+        build(root[len], 1, n - 1);  // 倒着建树
+    }
+
+    void insert(int &u, int v, int l, int r, int pos, int x) {
+        u = ++idx;
+        lc[u] = lc[v];
+        rc[u] = rc[v];
+        sum[u] = sum[v];
+        if (l == r) {
+            sum[u] = x;
+            return;
+        }
+        int mid = (l + r) >> 1;
+        if (pos <= mid) {
+            insert(lc[u], lc[v], l, mid, pos, x);
+        } else {
+            insert(rc[u], rc[v], mid + 1, r, pos, x);
+        }
+        pushup(u);
+    }
+
+    void insert(int now, int pre, int pos, int x) {
+        insert(root[now], root[pre], 1, n - 1, pos, x);
+    }
+
+    int query(int u, int l, int r, int pos) {
+        if (l == r) {
+            return sum[u];
+        }
+        int mid = (l + r) >> 1;
+        if (pos <= mid) {
+            return query(lc[u], l, mid, pos);
+        } else {
+            return query(rc[u], mid + 1, r, pos);
+        }
+    }
+
+    int query(int t, int pos) {
+        return query(root[t], 1, n - 1, pos);
+    }
+};
+
+// 子序列自动机（值域大时）
+struct SubsequenceAutomaton {
+    const std::vector<int> &val;
+    PresidentTree Tree;
+    int n;
+
+    SubsequenceAutomaton(const std::vector<int> &a, std::vector<int> &init)
+        : val(a), Tree(init, (int)a.size() - 1),
+          n((int)a.size() - 1) {
+        for (int i = n - 1; i >= 0; --i) {
+            // 更新子序列自动机
+            Tree.insert(i, i + 1, val[i + 1], i + 1);
+        }
+    }
+
+    // pos 后面第一个值为 val 的位置
+    int query(int pos, int v) {
+        return Tree.query(pos, v);
+    }
+};
+        \end{lstlisting}
+
+\subsection{AC automaton | AC 自动机}
+
+    \txt{AC 自动机是在 \texttt{trie} 树基础上加上 \emph{fail} 指针得到的有向图。}
+    \txt{对于节点 $p$，若沿字符 $c$ 没有儿子，则跳到 $fail(p)$ 再尝试 $c$；fail 树上父亲表示更短的后缀。多模式匹配时在 AC 图上跑一遍文本串，并把贡献沿 fail 树向上累加即可。}
+
+    \begin{lstlisting}
+template <int Z, char Base>
+struct AcAutomaton {
+    std::vector<int> fail;                 // fail 指针
+    std::vector<std::vector<int>> ch;      // trie 图
+    std::vector<std::vector<int>> ID;      // 终止串编号
+    int idx = 0;
+    int sum = 0;
+    int n;                                 // 模式串个数
+
+    explicit AcAutomaton(std::vector<std::string> &s)
+        : n((int)s.size()) {
+        for (auto &x : s) {
+            sum += (int)x.size();
+        }
+        ch.assign(sum + 1, std::vector<int>(Z, 0));
+        fail.assign(sum + 1, 0);
+        ID.resize(sum + 1);
+        for (int i = 0; i < n; ++i) {
+            insert(i, s[i]);
+        }
+        build();
+    }
+
+    void insert(int id, const std::string &s) {
+        int p = 0;
+        for (char c : s) {
+            int x = c - Base;
+            if (!ch[p][x]) {
+                ch[p][x] = ++idx;
+            }
+            p = ch[p][x];
+        }
+        ID[p].push_back(id);
+    }
+
+    void build() {
+        std::queue<int> q;
+        for (int i = 0; i < Z; ++i) {
+            if (ch[0][i]) {
+                q.push(ch[0][i]);
+            }
+        }
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (int i = 0; i < Z; ++i) {
+                int v = ch[u][i];
+                if (v) {
+                    fail[v] = ch[fail[u]][i];
+                    q.push(v);
+                } else {
+                    ch[u][i] = ch[fail[u]][i];
+                }
+            }
+        }
+    }
+};
+    \end{lstlisting}
+
+\subsection{Suffix automaton | 后缀自动机}
+
+    \txt{后缀自动机（SAM）是一个 DAG，加上一棵 \emph{fail} 树。}
+    \txt{每个状态代表一个 endpos 等价类，\texttt{len[u]} 为该状态表示的最长子串长度，\texttt{fail[u]} 指向最长真后缀所在的状态。}
+
+    \begin{lstlisting}
+template <int Z, char Base>
+struct Sam {
+    std::vector<std::array<int, Z>> ch;  // 转移
+    std::vector<std::vector<int>> g;     // fail 树
+    std::vector<int> fail, len;
+    std::vector<long long> cnt;          // endpos 大小
+
+    int last;      // 上一个添加的状态
+    int tot;       // 总状态数
+    long long num; // 不同子串数量
+
+    explicit Sam(int n)
+        : ch((n + 1) << 1),
+          g((n + 1) << 1),
+          fail((n + 1) << 1),
+          len((n + 1) << 1),
+          cnt((n + 1) << 1, 0),
+          last(1), tot(1), num(0) {
+        fail[1] = -1;
+    }
+
+    explicit Sam(const std::string &s)
+        : Sam((int)s.size()) {
+        for (char c : s) {
+            add(c);
+        }
+        for (int i = 2; i <= tot; ++i) {
+            g[fail[i]].push_back(i);
+        }
+    }
+
+    void add(char c) {
+        c -= Base;
+        int cur = ++tot;
+        len[cur] = len[last] + 1;
+        cnt[cur] = 1;
+        int v = last;
+        while (v != -1 && !ch[v][c]) {
+            ch[v][c] = cur;
+            v = fail[v];
+        }
+        if (v == -1) {
+            fail[cur] = 1;
+        } else {
+            int q = ch[v][c];
+            if (len[v] + 1 == len[q]) {
+                fail[cur] = q;
+            } else {
+                int clone = ++tot;
+                len[clone] = len[v] + 1;
+                ch[clone] = ch[q];
+                fail[clone] = fail[q];
+                while (v != -1 && ch[v][c] == q) {
+                    ch[v][c] = clone;
+                    v = fail[v];
+                }
+                fail[q] = fail[cur] = clone;
+            }
+        }
+        last = cur;
+        num += len[cur] - (fail[cur] == -1 ? 0 : len[fail[cur]]);
+    }
+};
+    \end{lstlisting}
+
+    \subsubsection{Dynamic SAM with LCT (sketch) | LCT 维护 SAM 链 / 子树信息}
+
+    \txt{当需要在线维护串的改变时，可以用 LCT 维护 fail 树上的链或子树信息。核心是在 \texttt{add} 中对克隆节点做 \texttt{splay} 并复制节点信息，保证历史贡献不丢失。此处省略 LCT 具体实现，只保留 \texttt{add} 思路。}
+
+\subsection{Generalized SAM | 广义后缀自动机}
+
+    \txt{广义 SAM 在一棵 trie 上建多个字符串的 SAM，每个状态维护一个长度为串数的数组 \texttt{ID[u][i]}，表示该状态代表的子串在第 $i$ 个串中出现次数。}
+    \txt{在 fail 树上自底向上累加可以得到每个状态在每个串中的 endpos 大小，从而解决多串最长公共子串等问题。}
+
+    \begin{lstlisting}
+template <int Z, char Base>
+struct ExSam {
+    std::vector<std::array<int, Z>> ch;
+    std::vector<int> len, fail;
+    std::vector<std::vector<int>> ID;
+    std::vector<std::vector<int>> g;
+    int cnt;            // 字符串数量
+
+    int tot = 0, last = 0;
+    long long num = 0;
+
+    explicit ExSam(const std::vector<std::string> &S) {
+        cnt = (int)S.size();
+        int LEN = 0;
+        for (auto &str : S) {
+            LEN += (int)str.size();
+        }
+        len.assign(LEN << 1, 0);
+        fail.assign(LEN << 1, 0);
+        ch.assign(LEN << 1, {});
+        g.assign(LEN << 1, {});
+        ID.assign(LEN << 1, std::vector<int>(cnt, 0));
+        fail[0] = -1;
+
+        for (int i = 0; i < cnt; ++i) {
+            last = 0;
+            for (char c : S[i]) {
+                exadd(c, i);
+            }
+        }
+    }
+
+    void dfs(int u) {
+        for (int v : g[u]) {
+            dfs(v);
+            for (int i = 0; i < cnt; ++i) {
+                ID[u][i] += ID[v][i];
+            }
+        }
+    }
+
+    bool check(int p) {
+        for (int i = 0; i < cnt; ++i) {
+            if (!ID[p][i]) return false;
+        }
+        return true;
+    }
+
+    int querylen(const std::string &s) {
+        for (int i = 1; i <= tot; ++i) {
+            g[fail[i]].push_back(i);
+        }
+        dfs(0);
+        int p = 0, now = 0, res = 0;
+        for (char c : s) {
+            int x = c - Base;
+            if (check(ch[p][x])) {
+                p = ch[p][x];
+                ++now;
+            } else {
+                while (p != -1 && !check(ch[p][x])) {
+                    p = fail[p];
+                }
+                if (p == -1) {
+                    now = 0;
+                    p = 0;
+                } else {
+                    now = len[p] + 1;
+                    p = ch[p][x];
+                }
+            }
+            res = std::max(res, now);
+        }
+        return res;
+    }
+
+private:
+    void assign(int cur, int id) {
+        ID[cur][id] += 1;
+    }
+
+    void exadd(char c, int id) {
+        int x = c - Base;
+        if (ch[last][x]) {
+            int v = last;
+            int q = ch[v][x];
+            if (len[q] != len[v] + 1) {
+                int cl = ++tot;
+                len[cl] = len[v] + 1;
+                fail[cl] = fail[q];
+                ch[cl] = ch[q];
+                while (v != -1 && ch[v][x] == q) {
+                    ch[v][x] = cl;
+                    v = fail[v];
+                }
+                fail[q] = cl;
+                q = cl;
+            }
+            int cur = last = q;
+            assign(cur, id);
+            return;
+        }
+        int cur = ++tot;
+        len[cur] = len[last] + 1;
+        assign(cur, id);
+        int v = last;
+        while (v != -1 && !ch[v][x]) {
+            ch[v][x] = cur;
+            v = fail[v];
+        }
+        if (v == -1) {
+            fail[cur] = 0;
+        } else {
+            int q = ch[v][x];
+            if (len[q] == len[v] + 1) {
+                fail[cur] = q;
+            } else {
+                int cl = ++tot;
+                len[cl] = len[v] + 1;
+                fail[cl] = fail[q];
+                ch[cl] = ch[q];
+                while (v != -1 && ch[v][x] == q) {
+                    ch[v][x] = cl;
+                    v = fail[v];
+                }
+                fail[q] = fail[cur] = cl;
+            }
+        }
+        last = cur;
+        num += len[cur] - len[fail[cur]];
+    }
+};
+    \end{lstlisting}
+
+\subsection{Palindromic automaton | 回文自动机}
+
+    \txt{回文自动机（PAM）维护所有不同回文子串。建两棵根：偶数根 $0$ 和奇数根 $1$，其中 $len[0]=0,len[1]=-1$，且 $fail[0]=1$。每个节点代表一个回文串，\texttt{fail[u]} 为其最长真回文后缀。}
+
+    \begin{lstlisting}
+template <int Z, char Base>
+struct Pam {
+    std::vector<std::array<int, Z>> ch;
+    std::vector<int> fail, len, dep, cnt;
+    std::string s;
+
+    int cur = 0, tot = 1;  // 0: 偶根, 1: 奇根
+
+    explicit Pam(int n)
+        : ch(n + 2), fail(n + 2),
+          len(n + 2), dep(n + 2), cnt(n + 2, 0) {
+        fail[0] = 1;
+        len[1] = -1;
+    }
+
+    explicit Pam(const std::string &str)
+        : Pam((int)str.size()) {
+        for (int i = 0; i < (int)str.size(); ++i) {
+            add(i, str[i]);
+        }
+    }
+
+    void assign(int u, int /*id*/) {
+        cnt[u] += 1;
+    }
+
+    int getfail(int x, int i) {
+        while (i - len[x] - 1 < 0 || s[i - len[x] - 1] != s[i]) {
+            x = fail[x];
+        }
+        return x;
+    }
+
+    void add(int i, char c) {
+        int x = c - Base;
+        s.push_back(c);
+        int v = getfail(cur, i);
+        if (!ch[v][x]) {
+            fail[++tot] = ch[getfail(fail[v], i)][x];
+            ch[v][x] = tot;
+            len[tot] = len[v] + 2;
+            dep[tot] = dep[fail[tot]] + 1;
+        }
+        cur = ch[v][x];
+        assign(cur, i);
+    }
+
+    auto getFailTree() const {
+        std::vector<std::vector<int>> e(tot + 1);
+        for (int i = 0; i <= tot; ++i) {
+            if (i != 1) {
+                e[fail[i]].push_back(i);
+            }
+        }
+        return e;
+    }
+};
+    \end{lstlisting}
+
+\subsection{Suffix array | 后缀数组}
+
+    \txt{后缀数组维护后缀的字典序排序，\texttt{sa[i]} 为第 $i$ 小后缀的起始下标，\texttt{rk[i]} 为后缀 $i$ 的排名，\texttt{h[i]} 为 $sa[i]$ 与 $sa[i-1]$ 的 LCP。常用性质包括：}
+    \txt{1. $LCP(sa[i],sa[j]) = \min\limits_{k=i+1}^{j} h[k]$。\quad 2. 不同子串数：$n(n+1)/2 - \sum_{i=1}^{n} h[i]$。}
+
+    \begin{lstlisting}
+struct SuffixArray {
+    const int n;
+    std::vector<int> sa, rk, h;
+
+    template <class T>
+    explicit SuffixArray(const T &s)
+        : n((int)s.size()),
+          sa(n), rk(n),
+          id(n), tmp(n) {
+        std::iota(id.begin(), id.end(), 0);
+        for (int i = 0; i < n; ++i) {
+            rk[i] = s[i];
+        }
+        countSort();
+        for (int w = 1;; w <<= 1) {
+            std::iota(id.begin(), id.begin() + w + 1, n - w);
+            for (int i = 0, p = w; i < n; ++i) {
+                if (sa[i] >= w) {
+                    id[p++] = sa[i] - w;
+                }
+            }
+            countSort();
+            oldrk = rk;
+            rk[sa[0]] = 0;
+            for (int i = 1, p = 0; i < n; ++i) {
+                rk[sa[i]] = equal(sa[i], sa[i - 1], w) ? p : ++p;
+            }
+            if (rk[sa.back()] + 1 == n) break;
+        }
+        calcHeight(s);
+    }
+
+private:
+    std::vector<int> oldrk, id, tmp, cnt;
+
+    template <class T>
+    void calcHeight(const T &s) {
+        h.assign(n, 0);
+        for (int i = 0, k = 0; i < n; ++i) {
+            if (!rk[i]) continue;
+            if (k) --k;
+            while (i + k < n && s[i + k] == s[sa[rk[i] - 1] + k]) {
+                ++k;
+            }
+            h[rk[i]] = k;
+        }
+    }
+
+    void countSort() {
+        int m = *std::max_element(rk.begin(), rk.end());
+        cnt.assign(m + 1, 0);
+        for (int i = 0; i < n; ++i) {
+            cnt[tmp[i] = rk[id[i]]] += 1;
+        }
+        for (int i = 1; i < (int)cnt.size(); ++i) {
+            cnt[i] += cnt[i - 1];
+        }
+        for (int i = n - 1; i >= 0; --i) {
+            sa[--cnt[tmp[i]]] = id[i];
+        }
+    }
+
+    bool equal(int x, int y, int w) {
+        int rkx = (x + w < n ? oldrk[x + w] : -1);
+        int rky = (y + w < n ? oldrk[y + w] : -1);
+        return oldrk[x] == oldrk[y] && rkx == rky;
+    }
+};
+    \end{lstlisting}
+

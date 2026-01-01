@@ -1,0 +1,142 @@
+template <class T>
+class SPFA
+{
+private:
+    int n;                                           // 节点数量
+    const T INF = std::numeric_limits<T>::max() / 2; // 无穷大值
+    std::vector<std::vector<std::pair<int, int>>> g; // 邻接表
+    std::vector<T> dis;                            // 最短距离
+    std::vector<int> pre;                            // 前驱节点
+    std::vector<int> inQueue;                        // 节点是否在队列中
+    std::vector<int> relaxCount;                     // 节点松弛次数
+
+public:
+    // 构造函数，初始化节点数量
+    SPFA(int n)
+        : n(n),
+          g(n + 1),
+          dis(n + 1, INF),
+          pre(n + 1, -1),
+          inQueue(n + 1, 0),
+          relaxCount(n + 1, 0) {}
+
+    // 添加有向边 u->v，权重为 w
+    void addEdge(int u, int v, int w)
+    {
+        g[u].emplace_back(v, w);
+    }
+
+    // 执行 SPFA 算法
+    // 参数：起点 st
+    // 返回值：pair<bool, bool>
+    //   first: 是否成功找到最短路径
+    //   second: 是否存在负权环
+    [[nodiscard]] std::pair<bool, bool> run(int st)
+    {
+        // 初始化
+        dis.assign(n + 1, INF);
+        pre.assign(n + 1, -1);
+        inQueue.assign(n + 1, 0);
+        relaxCount.assign(n + 1, 0);
+        dis[st] = 0;
+        std::queue<int> q;
+        q.push(st);
+        inQueue[st] = 1;
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inQueue[u] = 0;
+
+            for (const auto &[v, w] : g[u])
+            {
+                if (dis[u] + w < dis[v])
+                {
+                    dis[v] = dis[u] + w;
+                    pre[v] = u;
+                    relaxCount[v] = relaxCount[u] + 1;
+
+                    // 如果松弛次数超过n次，说明存在负权环
+                    if (relaxCount[v] >= n)
+                    {
+                        return {false, true};
+                    }
+
+                    if (!inQueue[v])
+                    {
+                        q.push(v);
+                        inQueue[v] = 1;
+                    }
+                }
+            }
+        }
+
+        return {true, false};
+    }
+
+    // 获取最短距离数组
+    const std::vector<T> &getDistance() const
+    {
+        return dis;
+    }
+
+    // 获取从起点到终点的最短路径
+    std::vector<int> getPath(int target) const
+    {
+        std::vector<int> path;
+        if (pre[target] == -1 && dis[target] == INF)
+        {
+            return path; // 不可达
+        }
+
+        for (int u = target; u != -1; u = pre[u])
+        {
+            path.push_back(u);
+        }
+        std::reverse(path.begin(), path.end());
+        return path;
+    }
+
+    // 检查图中是否存在负权环
+    bool has_negative_cycle()
+    {
+        // 需要重新初始化
+        dis.assign(n + 1, 0);     // 使用0初始化以检测所有可能的负环
+        inQueue.assign(n + 1, 1); // 初始所有节点都在队列中
+        relaxCount.assign(n + 1, 0);
+
+        std::queue<int> q;
+        for (int i = 1; i <= n; ++i)
+        {
+            q.push(i);
+        }
+
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inQueue[u] = 0;
+
+            for (const auto &[v, w] : g[u])
+            {
+                if (dis[u] + w < dis[v])
+                {
+                    dis[v] = dis[u] + w;
+                    relaxCount[v] = relaxCount[u] + 1;
+
+                    if (relaxCount[v] >= n)
+                    {
+                        return true;
+                    }
+
+                    if (!inQueue[v])
+                    {
+                        q.push(v);
+                        inQueue[v] = 1;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+};

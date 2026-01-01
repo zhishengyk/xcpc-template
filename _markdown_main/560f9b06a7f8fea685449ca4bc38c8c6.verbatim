@@ -1,0 +1,68 @@
+using u64 = unsigned long long;
+
+template <class T>
+struct Rand
+{
+    std::mt19937 myrand;
+    Rand(const long long seed = time(0)) : myrand(seed) {}
+    T operator()(T l, T r)
+    {
+        return std::uniform_int_distribution<T>(l, r)(myrand);
+    }
+};
+Rand<u64> rd;
+
+u64 f(u64 x)
+{
+    const static u64 r1 = rd(1 << 20, 1 << 24);
+    const static u64 r2 = rd(1 << 25, 1 << 30);
+    const static u64 mask = (1ll << 31) - 1;
+
+    auto h = [&](u64 y)
+    {
+        return (u64)y * y * y * r1 + r2;
+    };
+    return h(x & mask) + h(x >> 31);
+}
+
+struct Treehash // 得到每个点为根的hash值 On
+{
+    int n;
+    std::vector<std::vector<int>> g;
+    std::vector<u64> hash;
+    u64 ans = 0;
+    void dfs1(int u, int fa)
+    {
+        hash[u] = 1;
+        for (auto v : g[u])
+        {
+            if (v == fa)
+            {
+                continue;
+            }
+            dfs1(v, u);
+            hash[u] += f(hash[v]);
+        }
+    }
+    void dfs2(int u, int fa)
+    {
+        for (auto v : g[u])
+        {
+            if (v == fa)
+            {
+                continue;
+            }
+            hash[v] = hash[v] + f(hash[u] - f(hash[v]));
+            dfs2(v, u);
+        }
+    }
+    Treehash(std::vector<std::vector<int>> &e) : n(e.size() - 1), g(e), hash(n + 1)
+    {
+        dfs1(1, 0);
+        dfs2(1, 0);
+        for (int i = 1; i <= n; ++i)
+        {
+            ans ^= hash[i];
+        }
+    }
+};

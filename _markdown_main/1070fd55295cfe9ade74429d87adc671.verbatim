@@ -1,0 +1,78 @@
+
+class SquareCounter
+{
+private:
+    int n;                            // 顶点数
+    std::vector<int> deg;             // 顶点度数
+    std::vector<std::vector<int>> E;  // 原始无向图邻接表
+    std::vector<std::vector<int>> E1; // 有向图邻接表（度数大→小，或编号大→小）
+    std::vector<int> cnt;             // 临时计数器
+
+public:
+    // 构造函数：初始化图的大小
+    explicit SquareCounter(int vertices)
+        : n(vertices), deg(n + 1), E(n + 1), E1(n + 1), cnt(n + 1) {}
+
+    // 添加边到图中
+    void addEdge(int u, int v)
+    {
+        E[u].push_back(v);
+        E[v].push_back(u);
+        deg[u]++;
+        deg[v]++;
+    }
+
+    // 计算图中三角形数量
+    int count()
+    {
+        buildDirectedGraph();
+        return calc();
+    }
+
+private:
+    // 构建有向图E1：度数大的点指向度数小的点，度数相同则编号大的点指向编号小的点
+    void buildDirectedGraph()
+    {
+        for (int u = 1; u <= n; ++u)
+        {
+            for (int v : E[u])
+            {
+                if (deg[u] > deg[v] || (deg[u] == deg[v] && u > v))
+                {
+                    E1[u].push_back(v);
+                }
+            }
+        }
+    }
+
+    // 处理并计算三角形数量
+    int calc()
+    {
+        int ans = 0;
+        for (int a = 1; a <= n; ++a)
+        {
+            // 遍历a的所有有向边邻居b
+            for (int b : E1[a])
+            {
+                // 遍历b的所有邻居c
+                for (int c : E[b])
+                {
+                    // 检查c是否满足条件：度数小于a或度数相同但编号小于a
+                    if (deg[c] < deg[a] || (deg[c] == deg[a] && c < a))
+                    {
+                        ans += cnt[c]++;
+                    }
+                }
+            }
+            // 重置计数器
+            for (int b : E1[a])
+            {
+                for (int c : E[b])
+                {
+                    cnt[c] = 0;
+                }
+            }
+        }
+        return ans;
+    }
+};
